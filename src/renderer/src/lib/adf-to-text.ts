@@ -8,6 +8,12 @@ export function adfToText(node: ContentNode | null | undefined): string {
   return node.content.map(adfToText).join(node.type === 'paragraph' ? '\n' : '')
 }
 
+// Jira base URL pro media — nastavuje se při inicializaci
+let _jiraBaseUrl = ''
+export function setAdfJiraBaseUrl(url: string) {
+  _jiraBaseUrl = url.replace(/\/$/, '')
+}
+
 // Convert ADF to simple HTML for display
 export function adfToHtml(node: ContentNode | null | undefined): string {
   if (!node) return ''
@@ -47,6 +53,45 @@ export function adfToHtml(node: ContentNode | null | undefined): string {
       return '<br/>'
     case 'rule':
       return '<hr/>'
+
+    // ── Media / obrázky ───────────────────────────────────────────
+    case 'mediaSingle':
+      return `<div class="adf-media-single">${node.content?.map(adfToHtml).join('') ?? ''}</div>`
+    case 'mediaGroup':
+      return `<div class="adf-media-group">${node.content?.map(adfToHtml).join('') ?? ''}</div>`
+    case 'media': {
+      const attrs = node.attrs as any
+      if (attrs?.type === 'external' && attrs?.url) {
+        // Externí URL obrázku
+        return `<img src="${attrs.url}" class="adf-img" alt="" />`
+      }
+      if (attrs?.id && _jiraBaseUrl) {
+        // Příloha — načte se přes Jira REST API (auth přidá Electron interceptor)
+        const src = `${_jiraBaseUrl}/rest/api/3/attachment/content/${attrs.id}`
+        const widthStyle = attrs.width ? `max-width:${attrs.width}px;` : ''
+        return `<img src="${src}" class="adf-img" style="${widthStyle}" alt="" />`
+      }
+      return ''
+    }
+    case 'inlineCard': {
+      const url = (node.attrs as any)?.url
+      if (url) return `<a href="${url}" target="_blank" class="adf-inline-card">${url}</a>`
+      return ''
+    }
+    case 'blockCard': {
+      const url = (node.attrs as any)?.url
+      if (url) return `<div class="adf-block-card"><a href="${url}" target="_blank">${url}</a></div>`
+      return ''
+    }
+    case 'emoji': {
+      const text = (node.attrs as any)?.text ?? (node.attrs as any)?.shortName ?? ''
+      return `<span class="adf-emoji">${text}</span>`
+    }
+    case 'mention': {
+      const name = (node.attrs as any)?.text ?? ''
+      return `<span class="adf-mention">${name}</span>`
+    }
+
     default:
       return node.content?.map(adfToHtml).join('') ?? ''
   }

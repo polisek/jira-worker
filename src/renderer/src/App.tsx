@@ -5,6 +5,7 @@ import { BoardView } from './components/BoardView'
 import { ListView } from './components/ListView'
 import { SettingsView } from './components/SettingsView'
 import { TaskDetail } from './components/TaskDetail'
+import { setAdfJiraBaseUrl } from './lib/adf-to-text'
 import type { JiraSettings, JiraIssue, JiraProject, ViewMode } from './types/jira'
 
 export default function App() {
@@ -20,6 +21,7 @@ export default function App() {
   useEffect(() => {
     window.api.getSettings().then((s) => {
       setSettings(s)
+      if (s?.baseUrl) setAdfJiraBaseUrl(s.baseUrl)
       setSettingsLoaded(true)
     })
   }, [])
@@ -27,6 +29,7 @@ export default function App() {
   const handleSaveSettings = async (s: JiraSettings) => {
     await window.api.setSettings(s)
     setSettings(s)
+    setAdfJiraBaseUrl(s.baseUrl)
     setView('board')
   }
 

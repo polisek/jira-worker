@@ -195,4 +195,37 @@
   .adf-content strong {
     @apply font-semibold text-gray-200;
   }
+
+  .adf-img {
+    @apply max-w-full rounded-lg border border-gray-700 my-2;
+    display: block;
+  }
+
+  .adf-media-single {
+    @apply my-2;
+  }
+
+  .adf-media-group {
+    @apply flex flex-wrap gap-2 my-2;
+  }
+
+  .adf-media-group .adf-img {
+    @apply m-0 max-w-xs;
+  }
+
+  .adf-inline-card {
+    @apply text-blue-400 hover:text-blue-300 underline text-xs bg-gray-800 px-1.5 py-0.5 rounded;
+  }
+
+  .adf-block-card {
+    @apply bg-gray-800/60 border border-gray-700 rounded-lg p-2 my-2 text-xs;
+  }
+
+  .adf-mention {
+    @apply text-blue-400 font-medium;
+  }
+
+  .adf-emoji {
+    @apply text-base;
+  }
 }

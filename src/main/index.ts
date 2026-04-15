@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, nativeTheme } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, session } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import Store from 'electron-store'
@@ -59,6 +59,7 @@ app.whenReady().then(() => {
 
   ipcMain.handle('settings:set', (_event, settings) => {
     store.set('settings', settings)
+    ipcMain.emit('settings:changed')
     return true
   })
 
@@ -95,6 +96,11 @@ app.whenReady().then(() => {
     return text ? JSON.parse(text) : null
   })
 
+  // ── Jira media interceptor ────────────────────────────────────
+  // Přidá Basic auth hlavičku pro requesty na obrázky/přílohy z Jiry,
+  // aby se <img> tagy v popisech načetly správně.
+  setupMediaInterceptor()
+
   createWindow()
 
   app.on('activate', function () {
@@ -105,3 +111,26 @@ app.whenReady().then(() => {
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
 })
+
+function setupMediaInterceptor() {
+  // Při každé změně nastavení znovu nastavíme interceptor
+  ipcMain.on('settings:changed', () => attachInterceptor())
+  attachInterceptor()
+}
+
+function attachInterceptor() {
+  const settings = store.get('settings') as any
+  if (!settings?.baseUrl || !settings?.email || !settings?.apiToken) return
+
+  const jiraHost = new URL(settings.baseUrl).hostname
+  const credentials = Buffer.from(`${settings.email}:${settings.apiToken}`).toString('base64')
+
+  // Zachytí všechny requesty na Jira doménu a přidá auth header
+  session.defaultSession.webRequest.onBeforeSendHeaders(
+    { urls: [`*://${jiraHost}/*`] },
+    (details, callback) => {
+      details.requestHeaders['Authorization'] = `Basic ${credentials}`
+      callback({ requestHeaders: details.requestHeaders })
+    }
+  )
+}
