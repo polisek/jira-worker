@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Kanban, List, Settings, RefreshCw, Search, User, Users, Inbox, Bell } from 'lucide-react'
+import { Kanban, List, Settings, RefreshCw, Search, User, Users, Inbox } from 'lucide-react'
 import { jiraApi } from '../lib/jira-api'
 import { RecentAssignments } from './RecentAssignments'
 import type { NotificationState } from '../hooks/useNotifications'
@@ -75,6 +75,12 @@ export function Sidebar({
         >
           <List className="w-4 h-4" /> Seznam
         </button>
+        <button
+          onClick={() => setView('settings')}
+          className={`sidebar-item ${view === 'settings' ? 'active' : ''}`}
+        >
+          <Settings className="w-4 h-4" /> Nastavení
+        </button>
       </div>
 
       {/* Notifications */}
@@ -141,15 +147,6 @@ export function Sidebar({
         ))}
       </div>
 
-      {/* Bottom */}
-      <div className="border-t border-gray-800 pt-2">
-        <button
-          onClick={() => setView('settings')}
-          className={`sidebar-item ${view === 'settings' ? 'active' : ''}`}
-        >
-          <Settings className="w-4 h-4" /> Nastavení
-        </button>
-      </div>
     </aside>
   )
 }

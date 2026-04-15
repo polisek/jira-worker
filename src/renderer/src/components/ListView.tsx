@@ -1,13 +1,14 @@
-import { RefreshCw, AlertCircle, ArrowUpDown } from 'lucide-react'
+import { RefreshCw, AlertCircle } from 'lucide-react'
 import { useIssues } from '../hooks/useIssues'
 import { formatDateShort } from '../lib/adf-to-text'
-import type { JiraIssue, JiraProject } from '../types/jira'
+import type { JiraIssue, JiraProject, AppPrefs } from '../types/jira'
 
 interface Props {
   selectedProject: JiraProject | null
   filter: 'all' | 'mine' | 'unassigned'
   searchQuery: string
   onSelectIssue: (issue: JiraIssue) => void
+  prefs: AppPrefs
 }
 
 const statusColors: Record<string, string> = {
@@ -24,8 +25,8 @@ const priorityDot: Record<string, string> = {
   Lowest: 'bg-gray-500'
 }
 
-export function ListView({ selectedProject, filter, searchQuery, onSelectIssue }: Props) {
-  const { issues, loading, error, total, reload } = useIssues({ selectedProject, filter, searchQuery })
+export function ListView({ selectedProject, filter, searchQuery, onSelectIssue, prefs }: Props) {
+  const { issues, loading, error, total, reload } = useIssues({ selectedProject, filter, searchQuery, prefs })
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">

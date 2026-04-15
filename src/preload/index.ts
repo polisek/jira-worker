@@ -17,7 +17,11 @@ const api = {
 
   // Nativní Windows notifikace
   notify: (title: string, body: string) =>
-    ipcRenderer.invoke('notify', { title, body })
+    ipcRenderer.invoke('notify', { title, body }),
+
+  // App preferences
+  getPrefs: () => ipcRenderer.invoke('prefs:get'),
+  setPrefs: (prefs: unknown) => ipcRenderer.invoke('prefs:set', prefs)
 }
 
 if (process.contextIsolated) {

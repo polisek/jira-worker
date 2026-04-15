@@ -63,6 +63,23 @@ app.whenReady().then(() => {
     return true
   })
 
+  // ── App prefs IPC ─────────────────────────────────────────────
+  ipcMain.handle('prefs:get', () => {
+    return store.get('prefs', {
+      doneMaxAgeDays: 14,
+      defaultFilter: 'mine',
+      defaultView: 'board',
+      maxResults: 100,
+      pollIntervalMinutes: 2,
+      notifWindowHours: 24
+    })
+  })
+
+  ipcMain.handle('prefs:set', (_event, prefs) => {
+    store.set('prefs', prefs)
+    return true
+  })
+
   // ── Jira API IPC ──────────────────────────────────────────────
   ipcMain.handle('jira:request', async (_event, { method, path, body }) => {
     const settings = store.get('settings') as any

@@ -1,14 +1,15 @@
 import { useState, useEffect, useCallback } from 'react'
 import { jiraApi } from '../lib/jira-api'
-import type { JiraIssue, JiraProject } from '../types/jira'
+import type { JiraIssue, JiraProject, AppPrefs } from '../types/jira'
 
 interface Options {
   selectedProject: JiraProject | null
   filter: 'all' | 'mine' | 'unassigned'
   searchQuery: string
+  prefs: AppPrefs
 }
 
-export function useIssues({ selectedProject, filter, searchQuery }: Options) {
+export function useIssues({ selectedProject, filter, searchQuery, prefs }: Options) {
   const [issues, setIssues] = useState<JiraIssue[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -31,16 +32,26 @@ export function useIssues({ selectedProject, filter, searchQuery }: Options) {
       parts.push(`(summary ~ "${searchQuery.trim()}" OR description ~ "${searchQuery.trim()}")`)
     }
 
+    // Filtr dokončených tasků podle stáří
+    if (prefs.doneMaxAgeDays === 0) {
+      // Nezobrazovat hotové vůbec
+      parts.push('statusCategory != Done')
+    } else if (prefs.doneMaxAgeDays > 0) {
+      // Zobrazit hotové jen pokud jsou novější než X dní
+      parts.push(`(statusCategory != Done OR updated >= "-${prefs.doneMaxAgeDays}d")`)
+    }
+    // doneMaxAgeDays === -1 → zobrazit vše, žádný filtr
+
     const where = parts.length > 0 ? parts.join(' AND ') + ' ' : ''
     return `${where}ORDER BY updated DESC`
-  }, [selectedProject, filter, searchQuery])
+  }, [selectedProject, filter, searchQuery, prefs.doneMaxAgeDays])
 
   const load = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
       const jql = buildJql()
-      const result = await jiraApi.searchIssues(jql, 100)
+      const result = await jiraApi.searchIssues(jql, prefs.maxResults)
       setIssues(result.issues)
       setTotal(result.total)
     } catch (e: any) {
@@ -48,7 +59,7 @@ export function useIssues({ selectedProject, filter, searchQuery }: Options) {
     } finally {
       setLoading(false)
     }
-  }, [buildJql])
+  }, [buildJql, prefs.maxResults])
 
   useEffect(() => {
     const timer = setTimeout(load, searchQuery ? 400 : 0)

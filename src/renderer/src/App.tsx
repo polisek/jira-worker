@@ -7,33 +7,45 @@ import { SettingsView } from './components/SettingsView'
 import { TaskDetail } from './components/TaskDetail'
 import { setAdfJiraBaseUrl } from './lib/adf-to-text'
 import { useNotifications } from './hooks/useNotifications'
-import type { JiraSettings, JiraIssue, JiraProject, ViewMode } from './types/jira'
+import type { JiraSettings, JiraIssue, JiraProject, ViewMode, AppPrefs } from './types/jira'
+import { DEFAULT_PREFS as DEFAULTS } from './types/jira'
 
 export default function App() {
   const [settings, setSettings] = useState<JiraSettings | null>(null)
   const [settingsLoaded, setSettingsLoaded] = useState(false)
+  const [prefs, setPrefs] = useState<AppPrefs>(DEFAULTS)
   const [view, setView] = useState<ViewMode>('board')
   const [selectedProject, setSelectedProject] = useState<JiraProject | null>(null)
   const [projects, setProjects] = useState<JiraProject[]>([])
   const [selectedIssue, setSelectedIssue] = useState<JiraIssue | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
-  const [filter, setFilter] = useState<'all' | 'mine' | 'unassigned'>('mine')
+  const [filter, setFilter] = useState<'all' | 'mine' | 'unassigned'>(DEFAULTS.defaultFilter)
 
-  const notifications = useNotifications()
+  const notifications = useNotifications(prefs)
 
   useEffect(() => {
-    window.api.getSettings().then((s) => {
+    Promise.all([
+      window.api.getSettings(),
+      window.api.getPrefs()
+    ]).then(([s, p]) => {
       setSettings(s)
       if (s?.baseUrl) setAdfJiraBaseUrl(s.baseUrl)
+      const loadedPrefs = p as AppPrefs
+      setPrefs(loadedPrefs)
+      setFilter(loadedPrefs.defaultFilter)
+      setView(loadedPrefs.defaultView as ViewMode)
       setSettingsLoaded(true)
     })
   }, [])
 
-  const handleSaveSettings = async (s: JiraSettings) => {
+  const handleSaveJira = async (s: JiraSettings) => {
     await window.api.setSettings(s)
     setSettings(s)
     setAdfJiraBaseUrl(s.baseUrl)
-    setView('board')
+  }
+
+  const handleSavePrefs = (p: AppPrefs) => {
+    setPrefs(p)
   }
 
   if (!settingsLoaded) {
@@ -44,12 +56,18 @@ export default function App() {
     )
   }
 
+  // První spuštění — nutná konfigurace Jiry
   if (!settings) {
     return (
       <div className="app-bg flex flex-col h-screen">
         <TitleBar />
-        <div className="flex-1 flex items-center justify-center">
-          <SettingsView onSave={handleSaveSettings} initial={null} />
+        <div className="flex-1 flex items-center justify-center overflow-y-auto py-8">
+          <SettingsView
+            onSaveJira={(s) => { handleSaveJira(s); setSettings(s) }}
+            onSavePrefs={handleSavePrefs}
+            initialJira={null}
+            prefs={prefs}
+          />
         </div>
       </div>
     )
@@ -76,8 +94,13 @@ export default function App() {
 
         <main className="flex-1 overflow-hidden flex">
           {view === 'settings' ? (
-            <div className="flex-1 flex items-center justify-center overflow-y-auto">
-              <SettingsView onSave={handleSaveSettings} initial={settings} />
+            <div className="flex-1 overflow-y-auto flex justify-center px-6 py-2">
+              <SettingsView
+                onSaveJira={handleSaveJira}
+                onSavePrefs={handleSavePrefs}
+                initialJira={settings}
+                prefs={prefs}
+              />
             </div>
           ) : view === 'board' ? (
             <BoardView
@@ -85,6 +108,7 @@ export default function App() {
               filter={filter}
               searchQuery={searchQuery}
               onSelectIssue={setSelectedIssue}
+              prefs={prefs}
             />
           ) : (
             <ListView
@@ -92,6 +116,7 @@ export default function App() {
               filter={filter}
               searchQuery={searchQuery}
               onSelectIssue={setSelectedIssue}
+              prefs={prefs}
             />
           )}
 

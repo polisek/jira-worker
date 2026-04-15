@@ -11,6 +11,8 @@ declare global {
       setSettings: (settings: JiraSettings) => Promise<boolean>
       jiraRequest: (opts: { method?: string; path: string; body?: unknown }) => Promise<unknown>
       notify: (title: string, body: string) => Promise<void>
+      getPrefs: () => Promise<AppPrefs>
+      setPrefs: (prefs: AppPrefs) => Promise<boolean>
     }
   }
 }
@@ -20,4 +22,13 @@ export interface JiraSettings {
   email: string
   apiToken: string
   defaultProject?: string
+}
+
+export interface AppPrefs {
+  doneMaxAgeDays: number   // 0 = nezobrazovat, -1 = vše
+  defaultFilter: 'all' | 'mine' | 'unassigned'
+  defaultView: 'board' | 'list'
+  maxResults: number
+  pollIntervalMinutes: number
+  notifWindowHours: number
 }

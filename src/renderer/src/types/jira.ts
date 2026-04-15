@@ -96,3 +96,21 @@ export interface JiraTransition {
 
 export type ViewMode = 'board' | 'list' | 'settings'
 export type StatusCategory = 'todo' | 'inprogress' | 'done'
+
+export interface AppPrefs {
+  doneMaxAgeDays: number   // 0 = nezobrazovat, -1 = vše
+  defaultFilter: 'all' | 'mine' | 'unassigned'
+  defaultView: 'board' | 'list'
+  maxResults: number
+  pollIntervalMinutes: number
+  notifWindowHours: number
+}
+
+export const DEFAULT_PREFS: AppPrefs = {
+  doneMaxAgeDays: 14,
+  defaultFilter: 'mine',
+  defaultView: 'board',
+  maxResults: 100,
+  pollIntervalMinutes: 2,
+  notifWindowHours: 24
+}

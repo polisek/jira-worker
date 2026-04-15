@@ -1,10 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { jiraApi } from '../lib/jira-api'
-import type { JiraIssue } from '../types/jira'
+import type { JiraIssue, AppPrefs } from '../types/jira'
 
-const POLL_INTERVAL_MS = 2 * 60 * 1000 // 2 minuty
 const SEEN_KEY = 'jw_seen_assignments'
-const WINDOW_HOURS = 24 // kolik hodin zpět sledujeme
 
 function getSeenIds(): Set<string> {
   try {
@@ -27,7 +25,7 @@ export interface NotificationState {
   refresh: () => void
 }
 
-export function useNotifications(): NotificationState {
+export function useNotifications(prefs: AppPrefs): NotificationState {
   const [recent, setRecent] = useState<JiraIssue[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -38,7 +36,7 @@ export function useNotifications(): NotificationState {
   const poll = useCallback(async () => {
     setLoading(true)
     try {
-      const jql = `assignee = currentUser() AND updated >= "-${WINDOW_HOURS}h" ORDER BY updated DESC`
+      const jql = `assignee = currentUser() AND updated >= "-${prefs.notifWindowHours}h" ORDER BY updated DESC`
       const result = await jiraApi.searchIssues(jql, 20)
       const issues = result.issues ?? []
       setRecent(issues)
@@ -83,9 +81,10 @@ export function useNotifications(): NotificationState {
 
   useEffect(() => {
     poll()
-    const timer = setInterval(poll, POLL_INTERVAL_MS)
+    const ms = prefs.pollIntervalMinutes * 60 * 1000
+    const timer = setInterval(poll, ms)
     return () => clearInterval(timer)
-  }, [poll])
+  }, [poll, prefs.pollIntervalMinutes])
 
   const markAllRead = useCallback(() => {
     setUnreadCount(0)

@@ -1,13 +1,14 @@
 import { RefreshCw, AlertCircle } from 'lucide-react'
 import { useIssues } from '../hooks/useIssues'
 import { IssueCard } from './IssueCard'
-import type { JiraIssue, JiraProject } from '../types/jira'
+import type { JiraIssue, JiraProject, AppPrefs } from '../types/jira'
 
 interface Props {
   selectedProject: JiraProject | null
   filter: 'all' | 'mine' | 'unassigned'
   searchQuery: string
   onSelectIssue: (issue: JiraIssue) => void
+  prefs: AppPrefs
 }
 
 const COLUMNS = [
@@ -16,8 +17,8 @@ const COLUMNS = [
   { key: 'done', label: 'Hotovo', categories: ['Done', 'done'] }
 ]
 
-export function BoardView({ selectedProject, filter, searchQuery, onSelectIssue }: Props) {
-  const { issues, loading, error, total, reload } = useIssues({ selectedProject, filter, searchQuery })
+export function BoardView({ selectedProject, filter, searchQuery, onSelectIssue, prefs }: Props) {
+  const { issues, loading, error, total, reload } = useIssues({ selectedProject, filter, searchQuery, prefs })
 
   const getColumnIssues = (categoryKey: string) => {
     return issues.filter((i) => {
