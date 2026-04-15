@@ -7,9 +7,10 @@ interface Options {
   filter: 'all' | 'mine' | 'unassigned'
   searchQuery: string
   prefs: AppPrefs
+  sprint?: string // 'active' | 'all' | 'none' | sprint id
 }
 
-export function useIssues({ selectedProject, filter, searchQuery, prefs }: Options) {
+export function useIssues({ selectedProject, filter, searchQuery, prefs, sprint }: Options) {
   const [issues, setIssues] = useState<JiraIssue[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -32,19 +33,25 @@ export function useIssues({ selectedProject, filter, searchQuery, prefs }: Optio
       parts.push(`(summary ~ "${searchQuery.trim()}" OR description ~ "${searchQuery.trim()}")`)
     }
 
+    // Sprint filtr
+    if (sprint === 'active') {
+      parts.push('sprint in openSprints()')
+    } else if (sprint === 'none') {
+      parts.push('sprint is EMPTY')
+    } else if (sprint && sprint !== 'all') {
+      parts.push(`sprint = ${sprint}`)
+    }
+
     // Filtr dokončených tasků podle stáří
     if (prefs.doneMaxAgeDays === 0) {
-      // Nezobrazovat hotové vůbec
       parts.push('statusCategory != Done')
     } else if (prefs.doneMaxAgeDays > 0) {
-      // Zobrazit hotové jen pokud jsou novější než X dní
       parts.push(`(statusCategory != Done OR updated >= "-${prefs.doneMaxAgeDays}d")`)
     }
-    // doneMaxAgeDays === -1 → zobrazit vše, žádný filtr
 
     const where = parts.length > 0 ? parts.join(' AND ') + ' ' : ''
     return `${where}ORDER BY updated DESC`
-  }, [selectedProject, filter, searchQuery, prefs.doneMaxAgeDays])
+  }, [selectedProject, filter, searchQuery, prefs.doneMaxAgeDays, sprint])
 
   const load = useCallback(async () => {
     setLoading(true)

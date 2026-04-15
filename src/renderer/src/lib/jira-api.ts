@@ -15,7 +15,7 @@ export const jiraApi = {
     const body: Record<string, unknown> = {
       jql,
       maxResults,
-      fields: ['summary', 'status', 'priority', 'issuetype', 'project', 'assignee', 'reporter', 'created', 'updated', 'duedate', 'labels', 'comment', 'subtasks', 'parent', 'timeestimate', 'timespent', 'customfield_10016', 'customfield_10014', 'description']
+      fields: ['summary', 'status', 'priority', 'issuetype', 'project', 'assignee', 'reporter', 'created', 'updated', 'duedate', 'labels', 'comment', 'subtasks', 'parent', 'timeestimate', 'timespent', 'customfield_10016', 'customfield_10014', 'customfield_10020', 'description']
     }
     if (nextPageToken) body.nextPageToken = nextPageToken
     return request('POST', `/search/jql`, body)

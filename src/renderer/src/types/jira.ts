@@ -57,6 +57,14 @@ export interface ContentNode {
   attrs?: Record<string, unknown>
 }
 
+export interface JiraSprint {
+  id: number
+  name: string
+  state: 'active' | 'closed' | 'future'
+  startDate?: string
+  endDate?: string
+}
+
 export interface JiraIssue {
   id: string
   key: string
@@ -85,6 +93,7 @@ export interface JiraIssue {
     story_points?: number
     customfield_10016?: number // story points
     customfield_10014?: string // epic link
+    customfield_10020?: JiraSprint[] // sprints
   }
 }
 
