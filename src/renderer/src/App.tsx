@@ -6,6 +6,7 @@ import { ListView } from './components/ListView'
 import { SettingsView } from './components/SettingsView'
 import { TaskDetail } from './components/TaskDetail'
 import { setAdfJiraBaseUrl } from './lib/adf-to-text'
+import { useNotifications } from './hooks/useNotifications'
 import type { JiraSettings, JiraIssue, JiraProject, ViewMode } from './types/jira'
 
 export default function App() {
@@ -17,6 +18,8 @@ export default function App() {
   const [selectedIssue, setSelectedIssue] = useState<JiraIssue | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [filter, setFilter] = useState<'all' | 'mine' | 'unassigned'>('mine')
+
+  const notifications = useNotifications()
 
   useEffect(() => {
     window.api.getSettings().then((s) => {
@@ -67,6 +70,8 @@ export default function App() {
           setFilter={setFilter}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
+          notifications={notifications}
+          onSelectIssue={setSelectedIssue}
         />
 
         <main className="flex-1 overflow-hidden flex">

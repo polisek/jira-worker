@@ -13,7 +13,11 @@ const api = {
 
   // Jira API proxy (runs in main process with credentials)
   jiraRequest: (opts: { method?: string; path: string; body?: unknown }) =>
-    ipcRenderer.invoke('jira:request', opts)
+    ipcRenderer.invoke('jira:request', opts),
+
+  // Nativní Windows notifikace
+  notify: (title: string, body: string) =>
+    ipcRenderer.invoke('notify', { title, body })
 }
 
 if (process.contextIsolated) {

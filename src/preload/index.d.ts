@@ -10,6 +10,7 @@ declare global {
       getSettings: () => Promise<JiraSettings | null>
       setSettings: (settings: JiraSettings) => Promise<boolean>
       jiraRequest: (opts: { method?: string; path: string; body?: unknown }) => Promise<unknown>
+      notify: (title: string, body: string) => Promise<void>
     }
   }
 }

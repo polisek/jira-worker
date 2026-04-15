@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, session } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, session, Notification } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import Store from 'electron-store'
@@ -94,6 +94,13 @@ app.whenReady().then(() => {
     }
 
     return text ? JSON.parse(text) : null
+  })
+
+  // ── Nativní notifikace IPC ────────────────────────────────────
+  ipcMain.handle('notify', (_event, { title, body }: { title: string; body: string }) => {
+    if (Notification.isSupported()) {
+      new Notification({ title, body, silent: false }).show()
+    }
   })
 
   // ── Jira media interceptor ────────────────────────────────────

@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Kanban, List, Settings, RefreshCw, Search, User, Users, Inbox } from 'lucide-react'
+import { Kanban, List, Settings, RefreshCw, Search, User, Users, Inbox, Bell } from 'lucide-react'
 import { jiraApi } from '../lib/jira-api'
-import type { JiraProject, ViewMode } from '../types/jira'
+import { RecentAssignments } from './RecentAssignments'
+import type { NotificationState } from '../hooks/useNotifications'
+import type { JiraIssue, JiraProject, ViewMode } from '../types/jira'
 
 interface Props {
   view: ViewMode
@@ -14,27 +16,31 @@ interface Props {
   setFilter: (f: 'all' | 'mine' | 'unassigned') => void
   searchQuery: string
   setSearchQuery: (q: string) => void
+  notifications: NotificationState
+  onSelectIssue: (issue: JiraIssue) => void
 }
 
 export function Sidebar({
   view, setView, projects, setProjects,
   selectedProject, setSelectedProject,
   filter, setFilter,
-  searchQuery, setSearchQuery
+  searchQuery, setSearchQuery,
+  notifications, onSelectIssue
 }: Props) {
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [projectsLoading, setProjectsLoading] = useState(false)
+  const [projectsError, setProjectsError] = useState<string | null>(null)
+  const [notifCollapsed, setNotifCollapsed] = useState(false)
 
   const loadProjects = async () => {
-    setLoading(true)
-    setError(null)
+    setProjectsLoading(true)
+    setProjectsError(null)
     try {
       const data = await jiraApi.getProjects()
       setProjects(data)
     } catch (e: any) {
-      setError(e.message)
+      setProjectsError(e.message)
     } finally {
-      setLoading(false)
+      setProjectsLoading(false)
     }
   }
 
@@ -71,8 +77,18 @@ export function Sidebar({
         </button>
       </div>
 
+      {/* Notifications */}
+      <div className="border-t border-gray-800/60 pt-2">
+        <RecentAssignments
+          state={notifications}
+          onSelectIssue={onSelectIssue}
+          collapsed={notifCollapsed}
+          onToggle={() => setNotifCollapsed((v) => !v)}
+        />
+      </div>
+
       {/* Filters */}
-      <div>
+      <div className="border-t border-gray-800/60 pt-2">
         <p className="sidebar-label">Filtr</p>
         <button
           onClick={() => setFilter('mine')}
@@ -95,15 +111,15 @@ export function Sidebar({
       </div>
 
       {/* Projects */}
-      <div className="flex-1">
+      <div className="flex-1 border-t border-gray-800/60 pt-2">
         <div className="flex items-center justify-between mb-1">
           <p className="sidebar-label">Projekty</p>
           <button onClick={loadProjects} className="text-gray-500 hover:text-gray-300 p-0.5 rounded">
-            <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3 h-3 ${projectsLoading ? 'animate-spin' : ''}`} />
           </button>
         </div>
 
-        {error && <p className="text-red-400 text-xs px-2 py-1">{error}</p>}
+        {projectsError && <p className="text-red-400 text-xs px-2 py-1">{projectsError}</p>}
 
         <button
           onClick={() => setSelectedProject(null)}
