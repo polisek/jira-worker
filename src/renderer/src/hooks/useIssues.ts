@@ -66,5 +66,5 @@ export function useIssues({ selectedProject, filter, searchQuery, prefs }: Optio
     return () => clearTimeout(timer)
   }, [load, searchQuery])
 
-  return { issues, loading, error, total, reload: load }
+  return { issues, setIssues, loading, error, total, reload: load }
 }

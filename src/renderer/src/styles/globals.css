@@ -91,6 +91,14 @@
     @apply animate-pulse bg-gray-800/30 border-gray-800;
   }
 
+  .issue-card[draggable="true"]:hover {
+    @apply border-gray-500 shadow-lg shadow-black/30;
+  }
+
+  .issue-card[draggable="true"]:active {
+    @apply scale-95;
+  }
+
   /* Detail panel */
   .detail-panel {
     background: #0a0d14;

@@ -1,18 +1,15 @@
 import type { JiraIssue } from '../types/jira'
 import { formatDateShort } from '../lib/adf-to-text'
-import { Calendar, MessageSquare, Tag } from 'lucide-react'
+import { Calendar, MessageSquare, GripVertical } from 'lucide-react'
 
 interface Props {
   issue: JiraIssue
   onClick: () => void
-}
-
-const priorityColors: Record<string, string> = {
-  Highest: 'text-red-400',
-  High: 'text-orange-400',
-  Medium: 'text-yellow-400',
-  Low: 'text-blue-400',
-  Lowest: 'text-gray-400'
+  // Drag & drop
+  dragging?: boolean
+  transitioning?: boolean
+  onDragStart?: (e: React.DragEvent) => void
+  onDragEnd?: (e: React.DragEvent) => void
 }
 
 const priorityDot: Record<string, string> = {
@@ -23,15 +20,37 @@ const priorityDot: Record<string, string> = {
   Lowest: 'bg-gray-500'
 }
 
-export function IssueCard({ issue, onClick }: Props) {
+export function IssueCard({ issue, onClick, dragging, transitioning, onDragStart, onDragEnd }: Props) {
   const { fields } = issue
   const commentCount = fields.comment?.total ?? 0
   const storyPoints = fields.customfield_10016
 
   return (
-    <div className="issue-card group cursor-pointer" onClick={onClick}>
+    <div
+      className={`issue-card group relative transition-all ${
+        dragging ? 'opacity-40 scale-95 rotate-1' : 'opacity-100'
+      } ${
+        transitioning ? 'opacity-60 pointer-events-none' : 'cursor-grab active:cursor-grabbing'
+      }`}
+      draggable={!transitioning}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      onClick={transitioning ? undefined : onClick}
+    >
+      {/* Grip handle — jen při hoveru */}
+      <div className="absolute left-1.5 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-30 transition-opacity">
+        <GripVertical className="w-3 h-3 text-gray-400" />
+      </div>
+
+      {/* Transitioning spinner */}
+      {transitioning && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-900/50 rounded-lg">
+          <div className="w-4 h-4 border-2 border-gray-600 border-t-blue-400 rounded-full animate-spin" />
+        </div>
+      )}
+
       {/* Header */}
-      <div className="flex items-start justify-between gap-2 mb-2">
+      <div className="flex items-start justify-between gap-2 mb-2 pl-3">
         <div className="flex items-center gap-1.5 min-w-0">
           <img src={fields.issuetype.iconUrl} alt={fields.issuetype.name} className="w-4 h-4 shrink-0" />
           <span className="text-xs text-gray-500 font-mono shrink-0">{issue.key}</span>
@@ -45,13 +64,13 @@ export function IssueCard({ issue, onClick }: Props) {
       </div>
 
       {/* Summary */}
-      <p className="text-sm text-gray-100 leading-snug mb-2 line-clamp-2 group-hover:text-white">
+      <p className="text-sm text-gray-100 leading-snug mb-2 line-clamp-2 group-hover:text-white pl-3">
         {fields.summary}
       </p>
 
       {/* Labels */}
       {fields.labels?.length > 0 && (
-        <div className="flex flex-wrap gap-1 mb-2">
+        <div className="flex flex-wrap gap-1 mb-2 pl-3">
           {fields.labels.slice(0, 3).map((l) => (
             <span key={l} className="badge badge-gray">{l}</span>
           ))}
@@ -59,7 +78,7 @@ export function IssueCard({ issue, onClick }: Props) {
       )}
 
       {/* Footer */}
-      <div className="flex items-center justify-between mt-auto pt-1">
+      <div className="flex items-center justify-between mt-auto pt-1 pl-3">
         <div className="flex items-center gap-2">
           {fields.duedate && (
             <span className="flex items-center gap-1 text-xs text-gray-500">
