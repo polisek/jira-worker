@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
-import { X, ExternalLink, Send, RefreshCw, Tag, Calendar, User, ChevronRight } from 'lucide-react'
+import { X, Send, RefreshCw, ChevronRight } from 'lucide-react'
 import { jiraApi } from '../lib/jira-api'
 import { adfToHtml, formatDate } from '../lib/adf-to-text'
-import type { JiraIssue, JiraTransition } from '../types/jira'
+import { UserPicker } from './UserPicker'
+import type { JiraIssue, JiraTransition, JiraUser } from '../types/jira'
 
 interface Props {
   issue: JiraIssue
@@ -24,6 +25,8 @@ export function TaskDetail({ issue, onClose, onUpdate }: Props) {
   const [sendingComment, setSendingComment] = useState(false)
   const [transitioning, setTransitioning] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [assignableUsers, setAssignableUsers] = useState<JiraUser[]>([])
+  const [reassigning, setReassigning] = useState(false)
 
   const loadDetail = async () => {
     setLoading(true)
@@ -42,7 +45,25 @@ export function TaskDetail({ issue, onClose, onUpdate }: Props) {
     }
   }
 
-  useEffect(() => { loadDetail() }, [issue.key])
+  useEffect(() => {
+    loadDetail()
+    jiraApi.getAssignableUsers(issue.key.split('-')[0])
+      .then(setAssignableUsers)
+      .catch(() => {})
+  }, [issue.key])
+
+  const handleReassign = async (user: JiraUser | null) => {
+    setReassigning(true)
+    try {
+      await jiraApi.assignIssue(detail.key, user?.accountId ?? null)
+      setDetail((prev) => ({ ...prev, fields: { ...prev.fields, assignee: user } }))
+      onUpdate({ ...detail, fields: { ...detail.fields, assignee: user } })
+    } catch (e: any) {
+      setError(e.message)
+    } finally {
+      setReassigning(false)
+    }
+  }
 
   const handleTransition = async (transition: JiraTransition) => {
     setTransitioning(true)
@@ -123,12 +144,13 @@ export function TaskDetail({ issue, onClose, onUpdate }: Props) {
         {/* Meta */}
         <div className="px-4 py-3 border-b border-gray-800 grid grid-cols-2 gap-3">
           <MetaItem label="Přiřazeno">
-            {detail.fields.assignee ? (
-              <div className="flex items-center gap-1.5">
-                <img src={detail.fields.assignee.avatarUrls['48x48']} alt="" className="w-5 h-5 rounded-full" />
-                <span className="text-xs text-gray-300">{detail.fields.assignee.displayName}</span>
-              </div>
-            ) : <span className="text-xs text-gray-500">Nikdo</span>}
+            <UserPicker
+              users={assignableUsers}
+              value={detail.fields.assignee}
+              onChange={handleReassign}
+              placeholder="Přiřadit..."
+            />
+            {reassigning && <p className="text-xs text-gray-500 mt-1">Ukládám...</p>}
           </MetaItem>
 
           <MetaItem label="Reporter">

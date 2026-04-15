@@ -87,7 +87,11 @@ app.whenReady().then(() => {
       throw new Error('Jira není nakonfigurovaná. Jděte do Nastavení.')
     }
 
-    const url = `${settings.baseUrl.replace(/\/$/, '')}/rest/api/3${path}`
+    // Agile API má jiný base path
+    const isAgile = path.startsWith('__agile__')
+    const cleanPath = isAgile ? path.replace('__agile__', '') : path
+    const base = isAgile ? '/rest/agile/1.0' : '/rest/api/3'
+    const url = `${settings.baseUrl.replace(/\/$/, '')}${base}${cleanPath}`
     const credentials = Buffer.from(`${settings.email}:${settings.apiToken}`).toString('base64')
 
     const response = await fetch(url, {

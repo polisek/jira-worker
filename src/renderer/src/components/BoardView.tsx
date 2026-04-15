@@ -1,12 +1,14 @@
 import { useState, useCallback, useMemo } from 'react'
-import { RefreshCw, AlertCircle, ChevronDown } from 'lucide-react'
+import { RefreshCw, AlertCircle, ChevronDown, Plus } from 'lucide-react'
 import { useIssues } from '../hooks/useIssues'
 import { IssueCard } from './IssueCard'
+import { CreateIssueModal } from './CreateIssueModal'
 import { jiraApi } from '../lib/jira-api'
 import type { JiraIssue, JiraProject, JiraSprint, AppPrefs } from '../types/jira'
 
 interface Props {
   selectedProject: JiraProject | null
+  projects: JiraProject[]
   filter: 'all' | 'mine' | 'unassigned'
   searchQuery: string
   onSelectIssue: (issue: JiraIssue) => void
@@ -32,9 +34,10 @@ const CATEGORY_RING: Record<string, string> = {
   done: 'ring-green-500/40'
 }
 
-export function BoardView({ selectedProject, filter, searchQuery, onSelectIssue, prefs }: Props) {
+export function BoardView({ selectedProject, projects, filter, searchQuery, onSelectIssue, prefs }: Props) {
   const [selectedSprint, setSelectedSprint] = useState<string>('active')
   const [sprintOpen, setSprintOpen] = useState(false)
+  const [showCreate, setShowCreate] = useState(false)
 
   const { issues, loading, error, total, reload, setIssues } = useIssues({
     selectedProject, filter, searchQuery, prefs, sprint: selectedSprint
@@ -248,8 +251,23 @@ export function BoardView({ selectedProject, filter, searchQuery, onSelectIssue,
           <button onClick={reload} className="btn-icon" disabled={loading}>
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
+          <button
+            onClick={() => setShowCreate(true)}
+            className="btn-primary flex items-center gap-1.5 text-sm px-3 py-1.5"
+          >
+            <Plus className="w-4 h-4" /> Nový task
+          </button>
         </div>
       </div>
+
+      {showCreate && (
+        <CreateIssueModal
+          projects={projects}
+          defaultProject={selectedProject}
+          onClose={() => setShowCreate(false)}
+          onCreated={(issue) => { setShowCreate(false); onSelectIssue(issue); reload() }}
+        />
+      )}
 
       {error && (
         <div className="mx-4 mt-3 p-3 bg-red-500/10 border border-red-500/30 rounded-lg flex items-center gap-2">

@@ -1,10 +1,13 @@
-import { RefreshCw, AlertCircle } from 'lucide-react'
+import { useState } from 'react'
+import { RefreshCw, AlertCircle, Plus } from 'lucide-react'
 import { useIssues } from '../hooks/useIssues'
 import { formatDateShort } from '../lib/adf-to-text'
+import { CreateIssueModal } from './CreateIssueModal'
 import type { JiraIssue, JiraProject, AppPrefs } from '../types/jira'
 
 interface Props {
   selectedProject: JiraProject | null
+  projects: JiraProject[]
   filter: 'all' | 'mine' | 'unassigned'
   searchQuery: string
   onSelectIssue: (issue: JiraIssue) => void
@@ -25,8 +28,9 @@ const priorityDot: Record<string, string> = {
   Lowest: 'bg-gray-500'
 }
 
-export function ListView({ selectedProject, filter, searchQuery, onSelectIssue, prefs }: Props) {
+export function ListView({ selectedProject, projects, filter, searchQuery, onSelectIssue, prefs }: Props) {
   const { issues, loading, error, total, reload } = useIssues({ selectedProject, filter, searchQuery, prefs })
+  const [showCreate, setShowCreate] = useState(false)
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -41,7 +45,22 @@ export function ListView({ selectedProject, filter, searchQuery, onSelectIssue, 
         <button onClick={reload} className="btn-icon" disabled={loading}>
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
         </button>
+        <button
+          onClick={() => setShowCreate(true)}
+          className="btn-primary flex items-center gap-1.5 text-sm px-3 py-1.5"
+        >
+          <Plus className="w-4 h-4" /> Nový task
+        </button>
       </div>
+
+      {showCreate && (
+        <CreateIssueModal
+          projects={projects}
+          defaultProject={selectedProject}
+          onClose={() => setShowCreate(false)}
+          onCreated={(issue) => { setShowCreate(false); onSelectIssue(issue); reload() }}
+        />
+      )}
 
       {error && (
         <div className="mx-4 mt-3 p-3 bg-red-500/10 border border-red-500/30 rounded-lg flex items-center gap-2">

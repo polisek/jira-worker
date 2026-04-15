@@ -105,6 +105,7 @@ export default function App() {
           ) : view === 'board' ? (
             <BoardView
               selectedProject={selectedProject}
+              projects={projects}
               filter={filter}
               searchQuery={searchQuery}
               onSelectIssue={setSelectedIssue}
@@ -113,6 +114,7 @@ export default function App() {
           ) : (
             <ListView
               selectedProject={selectedProject}
+              projects={projects}
               filter={filter}
               searchQuery={searchQuery}
               onSelectIssue={setSelectedIssue}
