@@ -1,0 +1,198 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
+    background: #0f1117;
+    color: #e2e8f0;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #374151;
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #4b5563;
+  }
+}
+
+@layer components {
+  .app-bg {
+    @apply bg-[#0f1117] text-gray-200;
+  }
+
+  /* Title bar */
+  .titlebar {
+    height: 38px;
+    background: #0a0c12;
+    border-bottom: 1px solid #1f2937;
+    flex-shrink: 0;
+  }
+
+  .titlebar-btn {
+    @apply w-7 h-7 flex items-center justify-center rounded text-gray-500 hover:text-gray-300 hover:bg-gray-800 transition-colors;
+  }
+
+  .titlebar-btn-close:hover {
+    @apply bg-red-500/80 text-white;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    background: #080b10;
+    border-right: 1px solid #1f2937;
+  }
+
+  .sidebar-label {
+    @apply text-xs font-semibold text-gray-600 uppercase tracking-wider px-2 mb-1 mt-2;
+  }
+
+  .sidebar-item {
+    @apply flex items-center gap-2.5 w-full px-2 py-1.5 text-sm text-gray-400 rounded-md hover:bg-gray-800/60 hover:text-gray-200 transition-colors text-left;
+  }
+
+  .sidebar-item.active {
+    @apply bg-blue-500/15 text-blue-300;
+  }
+
+  /* Board */
+  .board-column {
+    background: #0d1117;
+    border-radius: 10px;
+    border: 1px solid #1f2937;
+    padding: 12px;
+  }
+
+  /* Issue card */
+  .issue-card {
+    @apply bg-gray-800/60 border border-gray-700/50 rounded-lg p-3 hover:border-gray-600 hover:bg-gray-800/80 transition-all;
+  }
+
+  .issue-card.skeleton {
+    @apply animate-pulse bg-gray-800/30 border-gray-800;
+  }
+
+  /* Detail panel */
+  .detail-panel {
+    background: #0a0d14;
+  }
+
+  /* Settings card */
+  .settings-card {
+    @apply bg-gray-800/30 border border-gray-700/50 rounded-xl p-6;
+  }
+
+  /* Badges */
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .badge-gray {
+    @apply bg-gray-700/60 text-gray-300;
+  }
+
+  .badge-blue {
+    @apply bg-blue-500/20 text-blue-300;
+  }
+
+  .badge-green {
+    @apply bg-green-500/20 text-green-300;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    @apply bg-blue-600 hover:bg-blue-500 text-white font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply bg-gray-700 hover:bg-gray-600 text-gray-200 font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-sm {
+    @apply flex items-center gap-1 bg-gray-700/60 hover:bg-gray-700 text-gray-300 text-xs px-2.5 py-1 rounded-md transition-colors disabled:opacity-50 border border-gray-600/50;
+  }
+
+  .btn-icon {
+    @apply w-7 h-7 flex items-center justify-center rounded text-gray-500 hover:text-gray-300 hover:bg-gray-800 transition-colors disabled:opacity-50;
+  }
+
+  /* Inputs */
+  .input {
+    @apply bg-gray-800/60 border border-gray-700 text-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition-colors placeholder-gray-600;
+  }
+
+  .form-label {
+    @apply block text-sm font-medium text-gray-400 mb-1.5;
+  }
+
+  /* Spinner */
+  .spinner {
+    @apply w-8 h-8 border-2 border-gray-700 border-t-blue-500 rounded-full animate-spin;
+  }
+
+  /* ADF content */
+  .adf-content p {
+    @apply mb-2 last:mb-0;
+  }
+
+  .adf-content ul {
+    @apply list-disc pl-4 mb-2;
+  }
+
+  .adf-content ol {
+    @apply list-decimal pl-4 mb-2;
+  }
+
+  .adf-content li {
+    @apply mb-1;
+  }
+
+  .adf-content h1, .adf-content h2, .adf-content h3 {
+    @apply font-semibold text-gray-200 mb-2;
+  }
+
+  .adf-content code {
+    @apply bg-gray-800 text-blue-300 px-1 py-0.5 rounded text-xs font-mono;
+  }
+
+  .adf-content pre {
+    @apply bg-gray-800/80 border border-gray-700 rounded-lg p-3 mb-2 overflow-x-auto;
+  }
+
+  .adf-content pre code {
+    @apply bg-transparent p-0;
+  }
+
+  .adf-content blockquote {
+    @apply border-l-2 border-gray-600 pl-3 text-gray-500 italic mb-2;
+  }
+
+  .adf-content a {
+    @apply text-blue-400 hover:text-blue-300 underline;
+  }
+
+  .adf-content hr {
+    @apply border-gray-700 my-3;
+  }
+
+  .adf-content strong {
+    @apply font-semibold text-gray-200;
+  }
+}
