@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { TitleBar } from './components/TitleBar'
 import { Sidebar } from './components/Sidebar'
 import { BoardView } from './components/BoardView'
@@ -19,6 +19,7 @@ export default function App() {
   const [view, setView] = useState<ViewMode>('board')
   const [selectedProject, setSelectedProject] = useState<JiraProject | null>(null)
   const [projects, setProjects] = useState<JiraProject[]>([])
+  const pendingProjectKey = useRef<string | null>(null)
   const [selectedIssue, setSelectedIssue] = useState<JiraIssue | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [filter, setFilter] = useState<'all' | 'mine' | 'unassigned'>(DEFAULTS.defaultFilter)
@@ -36,9 +37,24 @@ export default function App() {
       setPrefs(loadedPrefs)
       setFilter(loadedPrefs.defaultFilter)
       setView(loadedPrefs.defaultView as ViewMode)
+      pendingProjectKey.current = loadedPrefs.selectedProjectKey ?? null
       setSettingsLoaded(true)
     })
   }, [])
+
+  const handleSetProjects = (p: JiraProject[]) => {
+    setProjects(p)
+    if (pendingProjectKey.current) {
+      const found = p.find((proj) => proj.key === pendingProjectKey.current) ?? null
+      setSelectedProject(found)
+      pendingProjectKey.current = null
+    }
+  }
+
+  const handleSetSelectedProject = (p: JiraProject | null) => {
+    setSelectedProject(p)
+    window.api.setPrefs({ ...prefs, selectedProjectKey: p?.key ?? null })
+  }
 
   const handleSaveJira = async (s: JiraSettings) => {
     await window.api.setSettings(s)
@@ -84,9 +100,9 @@ export default function App() {
           view={view}
           setView={setView}
           projects={projects}
-          setProjects={setProjects}
+          setProjects={handleSetProjects}
           selectedProject={selectedProject}
-          setSelectedProject={setSelectedProject}
+          setSelectedProject={handleSetSelectedProject}
           filter={filter}
           setFilter={setFilter}
           searchQuery={searchQuery}
