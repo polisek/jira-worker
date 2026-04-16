@@ -10,9 +10,11 @@ import type {
 } from "../types/jira"
 
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
-    return window.api.jiraRequest({ method, path, body }) as Promise<T>
+    console.log("[API]", method, path, body)
+    const result = (await window.api.jiraRequest({ method, path, body })) as T
+    console.log("[API response]", path, result)
+    return result
 }
-
 // Agile API (jiný base path)
 async function agileRequest<T>(path: string): Promise<T> {
     return window.api.jiraRequest({ method: "GET", path: `__agile__${path}` }) as Promise<T>
