@@ -63,7 +63,7 @@ export const jiraApi = {
     getIssue(key: string): Promise<JiraIssue> {
         return request(
             "GET",
-            `/issue/${key}?fields=summary,status,priority,issuetype,project,assignee,reporter,created,updated,duedate,labels,comment,subtasks,parent,timeestimate,timespent,customfield_10016,customfield_10020,description`
+            `/issue/${key}?fields=summary,status,priority,issuetype,project,assignee,reporter,created,updated,duedate,labels,comment,subtasks,parent,timeestimate,timespent,customfield_10016,customfield_10020,description,attachment`
         )
     },
 

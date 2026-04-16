@@ -13,6 +13,7 @@ declare global {
       notify: (title: string, body: string) => Promise<void>
       getPrefs: () => Promise<AppPrefs>
       setPrefs: (prefs: AppPrefs) => Promise<boolean>
+      fetchMedia: (contentUrl: string) => Promise<string | null>
       getTimeEntries: () => Promise<unknown[]>
       saveTimeEntry: (entry: unknown) => Promise<boolean>
       deleteTimeEntry: (id: string) => Promise<boolean>

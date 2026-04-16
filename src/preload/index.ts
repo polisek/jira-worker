@@ -21,6 +21,9 @@ const api = {
     getPrefs: () => ipcRenderer.invoke("prefs:get"),
     setPrefs: (prefs: unknown) => ipcRenderer.invoke("prefs:set", prefs),
 
+    // Media proxy
+    fetchMedia: (contentUrl: string) => ipcRenderer.invoke("media:fetch", contentUrl),
+
     // Time tracking
     getTimeEntries: () => ipcRenderer.invoke("time:getEntries"),
     saveTimeEntry: (entry: unknown) => ipcRenderer.invoke("time:saveEntry", entry),

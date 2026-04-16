@@ -57,6 +57,14 @@ export interface ContentNode {
   attrs?: Record<string, unknown>
 }
 
+export interface JiraAttachment {
+  id: string
+  filename: string
+  mimeType: string
+  size: number
+  content: string  // download URL — funguje s Basic auth
+}
+
 export interface JiraSprint {
   id: number
   name: string
@@ -94,6 +102,7 @@ export interface JiraIssue {
     customfield_10016?: number // story points
     customfield_10014?: string // epic link
     customfield_10020?: JiraSprint[] // sprints
+    attachment?: JiraAttachment[]
   }
 }
 

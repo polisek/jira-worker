@@ -3,6 +3,7 @@ import { X, Send, RefreshCw, ChevronRight, Save } from "lucide-react"
 import { jiraApi } from "../lib/jira-api"
 import { adfToHtml, adfToText, formatDate } from "../lib/adf-to-text"
 import { UserPicker } from "./UserPicker"
+import { AdfContent } from "./AdfContent"
 import type { JiraIssue, JiraTransition, JiraUser } from "../types/jira"
 
 interface Props {
@@ -360,15 +361,12 @@ export function TaskDetail({ issue, onClose, onUpdate }: Props) {
                             </div>
                         </>
                     ) : (
-                        <div
-                            className="adf-content text-sm text-gray-300 leading-relaxed cursor-text min-h-[2rem]"
-                            onDoubleClick={handleDescEdit}
-                            dangerouslySetInnerHTML={{
-                                __html:
-                                    descHtml ??
-                                    '<span class="text-gray-600 italic">Žádný popis — dvojklikem přidejte</span>',
-                            }}
-                        />
+                        <div className="text-sm text-gray-300 leading-relaxed cursor-text min-h-[2rem]" onDoubleClick={handleDescEdit}>
+                            {detail.fields.description
+                                ? <AdfContent node={detail.fields.description as any} attachments={detail.fields.attachment} />
+                                : <span className="text-gray-600 italic">Žádný popis — dvojklikem přidejte</span>
+                            }
+                        </div>
                     )}
                 </div>
 
@@ -424,9 +422,10 @@ export function TaskDetail({ issue, onClose, onUpdate }: Props) {
                                         </span>
                                         <span className="text-xs text-gray-600">{formatDate(c.created)}</span>
                                     </div>
-                                    <div
-                                        className="adf-content text-xs text-gray-400 leading-relaxed"
-                                        dangerouslySetInnerHTML={{ __html: adfToHtml(c.body as any) }}
+                                    <AdfContent
+                                        node={c.body as any}
+                                        className="text-xs text-gray-400 leading-relaxed"
+                                        attachments={detail.fields.attachment}
                                     />
                                 </div>
                             </div>

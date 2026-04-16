@@ -142,6 +142,25 @@ app.whenReady().then(() => {
         return text ? JSON.parse(text) : null
     })
 
+    // ── Media proxy ───────────────────────────────────────────────
+    ipcMain.handle("media:fetch", async (_e, contentUrl: string) => {
+        const settings = store.get("settings") as any
+        if (!settings?.email || !settings?.apiToken) return null
+        const credentials = Buffer.from(`${settings.email}:${settings.apiToken}`).toString("base64")
+        try {
+            const res = await fetch(contentUrl, {
+                headers: { Authorization: `Basic ${credentials}` },
+                redirect: "follow",
+            })
+            if (!res.ok) return null
+            const ct = res.headers.get("content-type") ?? "image/png"
+            const buffer = await res.arrayBuffer()
+            return `data:${ct.split(";")[0]};base64,${Buffer.from(buffer).toString("base64")}`
+        } catch {
+            return null
+        }
+    })
+
     // ── Nativní notifikace IPC ────────────────────────────────────
     ipcMain.handle("notify", (_event, { title, body }: { title: string; body: string }) => {
         if (Notification.isSupported()) {

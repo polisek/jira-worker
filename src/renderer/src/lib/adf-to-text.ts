@@ -54,25 +54,11 @@ export function adfToHtml(node: ContentNode | null | undefined): string {
         case "rule":
             return "<hr/>"
 
-        // ── Media / obrázky ───────────────────────────────────────────
+        // Media nody renderuje AdfContent komponenta přes IPC proxy
         case "mediaSingle":
-            return `<div class="adf-media-single">${node.content?.map(adfToHtml).join("") ?? ""}</div>`
         case "mediaGroup":
-            return `<div class="adf-media-group">${node.content?.map(adfToHtml).join("") ?? ""}</div>`
-        case "media": {
-            const attrs = node.attrs as any
-            if (attrs?.type === "external" && attrs?.url) {
-                // Externí URL obrázku
-                return `<img src="${attrs.url}" class="adf-img" alt="" />`
-            }
-            if (attrs?.id && _jiraBaseUrl) {
-                // Příloha — načte se přes Jira REST API (auth přidá Electron interceptor)
-                const src = `${_jiraBaseUrl}/rest/api/3/attachment/content/${attrs.id}`
-                const widthStyle = attrs.width ? `max-width:${attrs.width}px;` : ""
-                return `<img src="${src}" class="adf-img" style="${widthStyle}" alt="" />`
-            }
+        case "media":
             return ""
-        }
         case "inlineCard": {
             const url = (node.attrs as any)?.url
             if (url) return `<a href="${url}" target="_blank" class="adf-inline-card">${url}</a>`
