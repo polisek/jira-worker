@@ -54,7 +54,11 @@ jobs:
         with:
           node-version: 20
           cache: npm
-      - run: npm ci
+      - name: Instalace závislostí
+        run: npm ci
+        continue-on-error: true
+      - name: Instalace závislostí (retry)
+        run: npm ci
       - name: Nastav verzi z tagu
         run: npm version ${{ needs.tag.outputs.new_tag }} --no-git-tag-version
       - run: npm run build && npx electron-builder --mac --publish=always
