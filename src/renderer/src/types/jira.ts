@@ -98,6 +98,7 @@ export interface JiraIssue {
         parent?: { key: string; fields: { summary: string; status: JiraStatus } }
         timeestimate: number | null
         timespent: number | null
+        timeoriginalestimate: number | null
         story_points?: number
         customfield_10016?: number // story points
         customfield_10014?: string // epic link

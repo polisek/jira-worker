@@ -65,8 +65,13 @@ export const jiraApi = {
     getIssue(key: string): Promise<JiraIssue> {
         return request(
             "GET",
-            `/issue/${key}?fields=summary,status,priority,issuetype,project,assignee,reporter,created,updated,duedate,labels,comment,subtasks,parent,timeestimate,timespent,customfield_10016,customfield_10020,description,attachment`
+            `/issue/${key}?fields=summary,status,priority,issuetype,project,assignee,reporter,created,updated,duedate,labels,comment,subtasks,parent,timeestimate,timespent,timeoriginalestimate,customfield_10016,customfield_10020,description,attachment`
         )
+    },
+
+    getIssueTime(key: string): Promise<{ timespent: number | null; timeestimate: number | null; timeoriginalestimate: number | null }> {
+        return request<{ fields: any }>("GET", `/issue/${key}?fields=timespent,timeestimate,timeoriginalestimate`)
+            .then((r) => r.fields)
     },
 
     updateIssue(key: string, fields: Record<string, unknown>): Promise<void> {

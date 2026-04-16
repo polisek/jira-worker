@@ -4,6 +4,7 @@ import { jiraApi } from "../lib/jira-api"
 import { adfToText, formatDate } from "../lib/adf-to-text"
 import { UserPicker } from "./UserPicker"
 import { AdfContent } from "./AdfContent"
+import { TimeTracking } from "./TimeTracking"
 import type { JiraIssue, JiraTransition, JiraUser } from "../types/jira"
 
 interface Props {
@@ -325,6 +326,9 @@ export function TaskDetail({ issue, onClose, onUpdate }: Props) {
                         </div>
                     </div>
                 )}
+
+                {/* Čas */}
+                <TimeTracking issue={detail} />
 
                 {/* Description */}
                 <div className="px-4 py-3 border-b border-gray-800">
