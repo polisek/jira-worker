@@ -1,6 +1,6 @@
 {
     "name": "jira-worker",
-    "version": "1.0.2",
+    "version": "1.0.1",
     "description": "Clean Jira client for Windows",
     "main": "out/main/index.js",
     "author": "polisek",
