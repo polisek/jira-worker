@@ -1,10 +1,10 @@
-import { useState, useCallback, useMemo } from "react"
-import { RefreshCw, AlertCircle, ChevronDown, Plus } from "lucide-react"
+import { useState, useCallback, useMemo, useEffect, useRef } from "react"
+import { RefreshCw, AlertCircle, ChevronDown, Plus, GripVertical } from "lucide-react"
 import { useIssues } from "../hooks/useIssues"
 import { IssueCard } from "./IssueCard"
 import { CreateIssueModal } from "./CreateIssueModal"
 import { jiraApi } from "../lib/jira-api"
-import type { JiraIssue, JiraProject, JiraSprint, AppPrefs } from "../types/jira"
+import type { JiraIssue, JiraProject, JiraSprint, JiraStatus, AppPrefs } from "../types/jira"
 
 interface Props {
     selectedProject: JiraProject | null
@@ -47,44 +47,81 @@ export function BoardView({ selectedProject, projects, filter, searchQuery, onSe
         sprint: selectedSprint,
     })
 
-    // Drag state
+    // Drag state — karty
     const [draggingId, setDraggingId] = useState<string | null>(null)
     const [dragOverCol, setDragOverCol] = useState<string | null>(null)
     const [transitioning, setTransitioning] = useState<Set<string>>(new Set())
 
-    // ── Dynamické sloupce ze skutečných statusů ────────────────────
-    const columns = useMemo(() => {
-        const statusMap = new Map<
-            string,
-            {
-                name: string
-                categoryKey: string
-                categoryName: string
-                count: number
-            }
-        >()
+    // Drag state — sloupce
+    const draggingColRef = useRef<string | null>(null)
+    const [draggingColId, setDraggingColId] = useState<string | null>(null)
+    const [dragOverColId, setDragOverColId] = useState<string | null>(null)
 
-        for (const issue of issues) {
-            const s = issue.fields.status
-            if (!statusMap.has(s.id)) {
-                statusMap.set(s.id, {
-                    name: s.name,
-                    categoryKey: s.statusCategory.key,
-                    categoryName: s.statusCategory.name,
-                    count: 0,
-                })
-            }
-            statusMap.get(s.id)!.count++
+    // Uložené pořadí sloupců per projekt
+    const [columnOrder, setColumnOrder] = useState<string[]>([])
+
+    useEffect(() => {
+        const key = `boardColumnOrder_${selectedProject?.key ?? "__all__"}`
+        try {
+            const saved = localStorage.getItem(key)
+            setColumnOrder(saved ? JSON.parse(saved) : [])
+        } catch {
+            setColumnOrder([])
         }
+    }, [selectedProject])
 
-        // Seřadit: nejprve podle kategorie, pak abecedně
-        return [...statusMap.entries()]
-            .sort(([, a], [, b]) => {
-                const catDiff = (CATEGORY_ORDER[a.categoryKey] ?? 1) - (CATEGORY_ORDER[b.categoryKey] ?? 1)
+    // ── Všechny dostupné statusy z Jiry ───────────────────────────
+    const [allStatuses, setAllStatuses] = useState<JiraStatus[]>([])
+
+    useEffect(() => {
+        async function fetchStatuses() {
+            try {
+                if (selectedProject) {
+                    const types = await jiraApi.getProjectStatuses(selectedProject.key)
+                    const map = new Map<string, JiraStatus>()
+                    for (const t of types) {
+                        for (const s of t.statuses) {
+                            if (!map.has(s.id)) map.set(s.id, s)
+                        }
+                    }
+                    setAllStatuses([...map.values()])
+                } else {
+                    const statuses = await jiraApi.getAllStatuses()
+                    setAllStatuses(statuses)
+                }
+            } catch (err) {
+                console.error("Failed to fetch statuses:", err)
+            }
+        }
+        fetchStatuses()
+    }, [selectedProject])
+
+    // ── Sloupce boardu ze všech dostupných statusů Jiry ───────────
+    const columns = useMemo(() => {
+        const defaultSorted = [...allStatuses]
+            .sort((a, b) => {
+                const catDiff =
+                    (CATEGORY_ORDER[a.statusCategory.key] ?? 1) -
+                    (CATEGORY_ORDER[b.statusCategory.key] ?? 1)
                 return catDiff !== 0 ? catDiff : a.name.localeCompare(b.name, "cs")
             })
-            .map(([id, data]) => ({ id, ...data }))
-    }, [issues])
+            .map((s) => ({
+                id: s.id,
+                name: s.name,
+                categoryKey: s.statusCategory.key,
+                categoryName: s.statusCategory.name,
+            }))
+
+        if (columnOrder.length === 0) return defaultSorted
+
+        // Aplikuj uložené pořadí; nové statusy (neznámé) se připojí na konec ve výchozím pořadí
+        const savedMap = new Map(columnOrder.map((id, i) => [id, i]))
+        return [...defaultSorted].sort((a, b) => {
+            const ia = savedMap.has(a.id) ? savedMap.get(a.id)! : columnOrder.length + defaultSorted.findIndex((c) => c.id === a.id)
+            const ib = savedMap.has(b.id) ? savedMap.get(b.id)! : columnOrder.length + defaultSorted.findIndex((c) => c.id === b.id)
+            return ia - ib
+        })
+    }, [allStatuses, columnOrder])
 
     // ── Dostupné sprinty z načtených issues ───────────────────────
     const sprints = useMemo(() => {
@@ -108,7 +145,7 @@ export function BoardView({ selectedProject, projects, filter, searchQuery, onSe
         return s?.name ?? "Sprint"
     }, [selectedSprint, sprints])
 
-    // ── Drag handlers ─────────────────────────────────────────────
+    // ── Drag handlers — karty ─────────────────────────────────────
     const handleDragStart = useCallback((e: React.DragEvent, issueId: string) => {
         e.dataTransfer.effectAllowed = "move"
         e.dataTransfer.setData("issueId", issueId)
@@ -120,15 +157,20 @@ export function BoardView({ selectedProject, projects, filter, searchQuery, onSe
         setDragOverCol(null)
     }, [])
 
-    const handleDragOver = useCallback((e: React.DragEvent, statusName: string) => {
+    const handleDragOver = useCallback((e: React.DragEvent, colId: string) => {
         e.preventDefault()
         e.dataTransfer.dropEffect = "move"
-        setDragOverCol(statusName)
+        if (draggingColRef.current) {
+            setDragOverColId(colId)
+        } else {
+            setDragOverCol(colId)
+        }
     }, [])
 
     const handleDragLeave = useCallback((e: React.DragEvent) => {
         if (!(e.currentTarget as HTMLElement).contains(e.relatedTarget as Node)) {
             setDragOverCol(null)
+            setDragOverColId(null)
         }
     }, [])
 
@@ -136,7 +178,28 @@ export function BoardView({ selectedProject, projects, filter, searchQuery, onSe
         async (e: React.DragEvent, targetStatusId: string, targetCategoryKey: string) => {
             e.preventDefault()
             setDragOverCol(null)
+            setDragOverColId(null)
 
+            // ── Přesunutí sloupce ──────────────────────────────────
+            const colId = e.dataTransfer.getData("colId")
+            if (colId) {
+                if (colId === targetStatusId) return
+                const currentIds = columns.map((c) => c.id)
+                const fromIdx = currentIds.indexOf(colId)
+                const toIdx = currentIds.indexOf(targetStatusId)
+                if (fromIdx === -1 || toIdx === -1) return
+                const next = [...currentIds]
+                next.splice(fromIdx, 1)
+                next.splice(toIdx, 0, colId)
+                const storageKey = `boardColumnOrder_${selectedProject?.key ?? "__all__"}`
+                localStorage.setItem(storageKey, JSON.stringify(next))
+                setColumnOrder(next)
+                draggingColRef.current = null
+                setDraggingColId(null)
+                return
+            }
+
+            // ── Přesun karty ───────────────────────────────────────
             const issueId = e.dataTransfer.getData("issueId")
             if (!issueId) return
 
@@ -190,8 +253,23 @@ export function BoardView({ selectedProject, projects, filter, searchQuery, onSe
                 })
             }
         },
-        [issues, columns, reload, setIssues]
+        [issues, columns, reload, setIssues, selectedProject]
     )
+
+    // ── Drag handlers — sloupce ───────────────────────────────────
+    const handleColDragStart = useCallback((e: React.DragEvent, colId: string) => {
+        e.dataTransfer.effectAllowed = "move"
+        e.dataTransfer.setData("colId", colId)
+        draggingColRef.current = colId
+        setDraggingColId(colId)
+        e.stopPropagation()
+    }, [])
+
+    const handleColDragEnd = useCallback(() => {
+        draggingColRef.current = null
+        setDraggingColId(null)
+        setDragOverColId(null)
+    }, [])
 
     const getColumnIssues = (statusId: string) => issues.filter((i) => i.fields.status.id === statusId)
 
@@ -320,23 +398,32 @@ export function BoardView({ selectedProject, projects, filter, searchQuery, onSe
 
                 {columns.map((col) => {
                     const colIssues = getColumnIssues(col.id)
-                    const isOver = dragOverCol === col.id
+                    const isCardOver = dragOverCol === col.id
+                    const isColOver = dragOverColId === col.id && draggingColId !== col.id
 
                     return (
                         <div
                             key={col.id}
                             className={`board-column flex flex-col min-w-64 max-w-64 transition-all ${
-                                isOver
-                                    ? `ring-2 ${CATEGORY_RING[col.categoryKey] ?? "ring-blue-500/40"} bg-blue-500/5`
-                                    : ""
-                            }`}
+                                isColOver
+                                    ? "ring-2 ring-amber-500/40 bg-amber-500/5"
+                                    : isCardOver
+                                      ? `ring-2 ${CATEGORY_RING[col.categoryKey] ?? "ring-blue-500/40"} bg-blue-500/5`
+                                      : ""
+                            } ${draggingColId === col.id ? "opacity-40" : ""}`}
                             onDragOver={(e) => handleDragOver(e, col.id)}
                             onDragLeave={handleDragLeave}
                             onDrop={(e) => handleDrop(e, col.id, col.categoryKey)}
                         >
-                            {/* Column header */}
+                            {/* Column header — draggable pro přeřazení sloupců */}
                             <div className="flex items-center justify-between mb-3 px-1">
-                                <div className="flex items-center gap-2 min-w-0">
+                                <div
+                                    className="flex items-center gap-2 min-w-0 cursor-grab active:cursor-grabbing select-none"
+                                    draggable
+                                    onDragStart={(e) => handleColDragStart(e, col.id)}
+                                    onDragEnd={handleColDragEnd}
+                                >
+                                    <GripVertical className="w-3.5 h-3.5 text-gray-700 shrink-0" />
                                     <div
                                         className={`w-2 h-2 rounded-full shrink-0 ${CATEGORY_DOT[col.categoryKey] ?? "bg-gray-400"}`}
                                     />
@@ -349,7 +436,7 @@ export function BoardView({ selectedProject, projects, filter, searchQuery, onSe
                                 </span>
                             </div>
 
-                            {isOver && (
+                            {isCardOver && (
                                 <div
                                     className={`mx-1 mb-2 h-0.5 rounded-full animate-pulse ${
                                         col.categoryKey === "done"
@@ -378,12 +465,12 @@ export function BoardView({ selectedProject, projects, filter, searchQuery, onSe
                                 {!loading && colIssues.length === 0 && (
                                     <div
                                         className={`flex items-center justify-center h-16 text-sm rounded-lg border border-dashed transition-colors ${
-                                            isOver
+                                            isCardOver
                                                 ? "border-blue-500/50 text-blue-400/60"
                                                 : "border-gray-800 text-gray-700"
                                         }`}
                                     >
-                                        {isOver ? "Pustit sem" : "Prázdné"}
+                                        {isCardOver ? "Pustit sem" : "Prázdné"}
                                     </div>
                                 )}
                             </div>
