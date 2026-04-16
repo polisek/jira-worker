@@ -133,6 +133,7 @@ export interface AppPrefs {
   maxResults: number
   pollIntervalMinutes: number
   notifWindowHours: number
+  selectedProjectKey: string | null
 }
 
 export const DEFAULT_PREFS: AppPrefs = {
@@ -141,5 +142,6 @@ export const DEFAULT_PREFS: AppPrefs = {
   defaultView: 'board',
   maxResults: 100,
   pollIntervalMinutes: 2,
-  notifWindowHours: 24
+  notifWindowHours: 24,
+  selectedProjectKey: null
 }
