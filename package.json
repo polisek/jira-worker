@@ -41,7 +41,8 @@
         "publish": {
             "provider": "github",
             "owner": "polisek",
-            "repo": "jira-worker"
+            "repo": "jira-worker",
+            "releaseType": "release"
         },
         "win": {
             "target": "nsis",
