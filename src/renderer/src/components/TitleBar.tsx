@@ -1,4 +1,19 @@
+const isMac = navigator.userAgent.includes('Macintosh')
+
 export function TitleBar() {
+  if (isMac) {
+    return (
+      <div className="titlebar flex items-center justify-center px-4 select-none" style={{ WebkitAppRegion: 'drag' } as any}>
+        <div className="flex items-center gap-2">
+          <div className="w-5 h-5 rounded bg-blue-500 flex items-center justify-center">
+            <span className="text-white text-xs font-bold">J</span>
+          </div>
+          <span className="text-sm font-semibold text-gray-200">Jira Worker</span>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="titlebar flex items-center justify-between px-4 select-none" style={{ WebkitAppRegion: 'drag' } as any}>
       <div className="flex items-center gap-2">
