@@ -57,7 +57,7 @@
             "allowToChangeInstallationDirectory": true
         },
         "directories": {
-            "output": "C:\\jira-worker-dist"
+            "output": "dist"
         },
         "files": [
             "out/**/*",
