@@ -1,6 +1,7 @@
 import { app, shell, BrowserWindow, ipcMain, session, Notification } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+import { autoUpdater } from 'electron-updater'
 import Store from 'electron-store'
 
 const store = new Store()
@@ -130,6 +131,7 @@ app.whenReady().then(() => {
   setupMediaInterceptor()
 
   createWindow()
+  if (!is.dev) setupAutoUpdater()
 
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
@@ -139,6 +141,30 @@ app.whenReady().then(() => {
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
 })
+
+function setupAutoUpdater() {
+  autoUpdater.autoDownload = true
+  autoUpdater.autoInstallOnAppQuit = true
+
+  // Zkontrolovat po 3 sekundách od spuštění
+  setTimeout(() => autoUpdater.checkForUpdates(), 3000)
+  // A pak každou hodinu
+  setInterval(() => autoUpdater.checkForUpdates(), 60 * 60 * 1000)
+
+  autoUpdater.on('update-available', (info: { version: string }) => {
+    BrowserWindow.getAllWindows()[0]?.webContents.send('update:available', info.version)
+  })
+
+  autoUpdater.on('update-downloaded', () => {
+    BrowserWindow.getAllWindows()[0]?.webContents.send('update:downloaded')
+  })
+
+  autoUpdater.on('error', (err: Error) => {
+    console.error('AutoUpdater:', err.message)
+  })
+
+  ipcMain.on('update:install', () => autoUpdater.quitAndInstall())
+}
 
 function setupMediaInterceptor() {
   // Při každé změně nastavení znovu nastavíme interceptor

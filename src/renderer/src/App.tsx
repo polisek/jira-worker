@@ -7,6 +7,7 @@ import { SettingsView } from './components/SettingsView'
 import { TaskDetail } from './components/TaskDetail'
 import { setAdfJiraBaseUrl } from './lib/adf-to-text'
 import { useNotifications } from './hooks/useNotifications'
+import { UpdateBanner } from './components/UpdateBanner'
 import type { JiraSettings, JiraIssue, JiraProject, ViewMode, AppPrefs } from './types/jira'
 import { DEFAULT_PREFS as DEFAULTS } from './types/jira'
 
@@ -76,6 +77,7 @@ export default function App() {
   return (
     <div className="app-bg flex flex-col h-screen overflow-hidden">
       <TitleBar />
+      <UpdateBanner />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar
           view={view}

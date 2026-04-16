@@ -21,7 +21,14 @@ const api = {
 
   // App preferences
   getPrefs: () => ipcRenderer.invoke('prefs:get'),
-  setPrefs: (prefs: unknown) => ipcRenderer.invoke('prefs:set', prefs)
+  setPrefs: (prefs: unknown) => ipcRenderer.invoke('prefs:set', prefs),
+
+  // Auto-update
+  onUpdateAvailable: (cb: (version: string) => void) =>
+    ipcRenderer.on('update:available', (_e, version) => cb(version)),
+  onUpdateDownloaded: (cb: () => void) =>
+    ipcRenderer.on('update:downloaded', () => cb()),
+  installUpdate: () => ipcRenderer.send('update:install')
 }
 
 if (process.contextIsolated) {
