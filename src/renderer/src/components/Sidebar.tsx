@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Kanban, List, Settings, RefreshCw, Search, User, Users, Inbox } from 'lucide-react'
+import { Kanban, List, Settings, RefreshCw, Search, User, Users, Inbox, Timer } from 'lucide-react'
 import { jiraApi } from '../lib/jira-api'
 import { RecentAssignments } from './RecentAssignments'
 import type { NotificationState } from '../hooks/useNotifications'
@@ -74,6 +74,12 @@ export function Sidebar({
           className={`sidebar-item ${view === 'list' ? 'active' : ''}`}
         >
           <List className="w-4 h-4" /> Seznam
+        </button>
+        <button
+          onClick={() => setView('time')}
+          className={`sidebar-item ${view === 'time' ? 'active' : ''}`}
+        >
+          <Timer className="w-4 h-4" /> Měření času
         </button>
         <button
           onClick={() => setView('settings')}

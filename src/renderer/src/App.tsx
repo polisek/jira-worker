@@ -8,6 +8,7 @@ import { TaskDetail } from './components/TaskDetail'
 import { setAdfJiraBaseUrl } from './lib/adf-to-text'
 import { useNotifications } from './hooks/useNotifications'
 import { UpdateBanner } from './components/UpdateBanner'
+import { TimeTrackingView } from './components/TimeTrackingView'
 import type { JiraSettings, JiraIssue, JiraProject, ViewMode, AppPrefs } from './types/jira'
 import { DEFAULT_PREFS as DEFAULTS } from './types/jira'
 
@@ -95,7 +96,9 @@ export default function App() {
         />
 
         <main className="flex-1 overflow-hidden flex">
-          {view === 'settings' ? (
+          {view === 'time' ? (
+            <TimeTrackingView />
+          ) : view === 'settings' ? (
             <div className="flex-1 overflow-y-auto flex justify-center px-6 py-2">
               <SettingsView
                 onSaveJira={handleSaveJira}

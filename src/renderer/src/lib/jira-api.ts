@@ -100,5 +100,16 @@ export const jiraApi = {
   // Labels
   getLabels(): Promise<{ values: string[] }> {
     return request('GET', '/label?maxResults=100')
+  },
+
+  // Worklog — zalogovat čas do Jiry
+  logWork(issueKey: string, timeSpentSeconds: number, comment?: string): Promise<void> {
+    return request('POST', `/issue/${issueKey}/worklog`, {
+      timeSpentSeconds,
+      comment: comment ? {
+        type: 'doc', version: 1,
+        content: [{ type: 'paragraph', content: [{ type: 'text', text: comment }] }]
+      } : undefined
+    })
   }
 }

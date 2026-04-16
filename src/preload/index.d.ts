@@ -13,6 +13,9 @@ declare global {
       notify: (title: string, body: string) => Promise<void>
       getPrefs: () => Promise<AppPrefs>
       setPrefs: (prefs: AppPrefs) => Promise<boolean>
+      getTimeEntries: () => Promise<unknown[]>
+      saveTimeEntry: (entry: unknown) => Promise<boolean>
+      deleteTimeEntry: (id: string) => Promise<boolean>
       onUpdateAvailable: (cb: (version: string) => void) => void
       onUpdateDownloaded: (cb: () => void) => void
       installUpdate: () => void

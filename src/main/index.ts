@@ -64,6 +64,30 @@ app.whenReady().then(() => {
     return true
   })
 
+  // ── Time tracking IPC ────────────────────────────────────────
+  ipcMain.handle('time:getEntries', () => {
+    const entries = store.get('timeEntries', []) as any[]
+    const seen = new Set<string>()
+    return entries.filter((e: any) => {
+      const key = String(e.id)
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+  })
+  ipcMain.handle('time:saveEntry', (_e, entry) => {
+    const entries = store.get('timeEntries', []) as any[]
+    const filtered = entries.filter((e: any) => String(e.id) !== String(entry.id))
+    filtered.unshift(entry)
+    store.set('timeEntries', filtered.slice(0, 200))
+    return true
+  })
+  ipcMain.handle('time:deleteEntry', (_e, id) => {
+    const entries = store.get('timeEntries', []) as any[]
+    store.set('timeEntries', entries.filter((e: any) => String(e.id) !== String(id)))
+    return true
+  })
+
   // ── App prefs IPC ─────────────────────────────────────────────
   ipcMain.handle('prefs:get', () => {
     return store.get('prefs', {

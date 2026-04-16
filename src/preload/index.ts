@@ -23,6 +23,11 @@ const api = {
   getPrefs: () => ipcRenderer.invoke('prefs:get'),
   setPrefs: (prefs: unknown) => ipcRenderer.invoke('prefs:set', prefs),
 
+  // Time tracking
+  getTimeEntries: () => ipcRenderer.invoke('time:getEntries'),
+  saveTimeEntry: (entry: unknown) => ipcRenderer.invoke('time:saveEntry', entry),
+  deleteTimeEntry: (id: string) => ipcRenderer.invoke('time:deleteEntry', id),
+
   // Auto-update
   onUpdateAvailable: (cb: (version: string) => void) =>
     ipcRenderer.on('update:available', (_e, version) => cb(version)),

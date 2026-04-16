@@ -103,7 +103,18 @@ export interface JiraTransition {
   to: JiraStatus
 }
 
-export type ViewMode = 'board' | 'list' | 'settings'
+export type ViewMode = 'board' | 'list' | 'settings' | 'time'
+
+export interface TimeEntry {
+  id: string
+  startTime: string   // ISO
+  endTime: string     // ISO
+  duration: number    // sekundy
+  issueKey?: string
+  issueSummary?: string
+  notes?: string
+  loggedToJira?: boolean
+}
 export type StatusCategory = 'todo' | 'inprogress' | 'done'
 
 export interface AppPrefs {
