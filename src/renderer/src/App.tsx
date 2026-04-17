@@ -11,6 +11,7 @@ import { UpdateBanner } from "./components/UpdateBanner"
 import { TimeTrackingView } from "./components/TimeTrackingView"
 import { WorkLogView } from "./components/WorkLogView"
 import { ActivityView } from "./components/ActivityView"
+import { TreeView } from "./components/TreeView"
 import type { JiraSettings, JiraIssue, JiraProject, ViewMode, AppPrefs } from "./types/jira"
 import { DEFAULT_PREFS as DEFAULTS } from "./types/jira"
 
@@ -174,6 +175,14 @@ export default function App() {
                             selectedProject={selectedProject}
                             projects={projects}
                             filter={filter}
+                            searchQuery={searchQuery}
+                            onSelectIssue={setSelectedIssue}
+                            prefs={prefs}
+                        />
+                    ) : view === "tree" ? (
+                        <TreeView
+                            selectedProject={selectedProject}
+                            projects={projects}
                             searchQuery={searchQuery}
                             onSelectIssue={setSelectedIssue}
                             prefs={prefs}

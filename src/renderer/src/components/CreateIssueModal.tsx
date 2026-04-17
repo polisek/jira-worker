@@ -9,6 +9,12 @@ interface Props {
   defaultProject: JiraProject | null
   onClose: () => void
   onCreated: (issue: JiraIssue) => void
+  /** Pre-fills and locks the epic link (used from TreeView when adding under an Epic) */
+  defaultEpic?: JiraIssue | null
+  /** Pre-fills parent key, forces Subtask type (used from TreeView when adding under a Task) */
+  defaultParentKey?: string
+  /** Intended issue type name shown in header and pre-selected in form (e.g. "Epic", "Task", "Subtask") */
+  defaultIssueTypeName?: string
 }
 
 const PRIORITIES = [
@@ -24,7 +30,7 @@ const PRIORITY_DOT: Record<string, string> = {
   Low: 'bg-blue-500', Lowest: 'bg-gray-500'
 }
 
-export function CreateIssueModal({ projects, defaultProject, onClose, onCreated }: Props) {
+export function CreateIssueModal({ projects, defaultProject, onClose, onCreated, defaultEpic, defaultParentKey, defaultIssueTypeName }: Props) {
   const [project, setProject] = useState<JiraProject | null>(defaultProject ?? projects[0] ?? null)
 
   // Form fields
@@ -37,7 +43,7 @@ export function CreateIssueModal({ projects, defaultProject, onClose, onCreated 
   const [storyPoints, setStoryPoints] = useState<string>('')
   const [labels, setLabels] = useState<string[]>([])
   const [labelInput, setLabelInput] = useState('')
-  const [epic, setEpic] = useState<JiraIssue | null>(null)
+  const [epic, setEpic] = useState<JiraIssue | null>(defaultEpic ?? null)
 
   // Async data
   const [issueTypes, setIssueTypes] = useState<JiraIssueType[]>([])
@@ -58,7 +64,7 @@ export function CreateIssueModal({ projects, defaultProject, onClose, onCreated 
     setIssueType(null)
     setSprint(null)
     setAssignee(null)
-    setEpic(null)
+    setEpic(defaultEpic ?? null)
 
     Promise.allSettled([
       jiraApi.getIssueTypes(project.key),
@@ -72,17 +78,47 @@ export function CreateIssueModal({ projects, defaultProject, onClose, onCreated 
       jiraApi.getEpics(project.key)
     ]).then(([typesRes, usersRes, sprintsRes, epicsRes]) => {
       if (typesRes.status === 'fulfilled') {
-        const types = typesRes.value.filter((t) => t.name !== 'Epic' || true)
+        let types = typesRes.value
+        if (defaultEpic) {
+          // Under an epic: only non-subtask, non-epic types (i.e. Task/Story/Bug)
+          // Prefer plain Task if present
+          const taskOnly = types.filter((t) => !t.subtask && t.name.toLowerCase() === 'task')
+          if (taskOnly.length > 0) {
+            types = taskOnly
+          } else {
+            types = types.filter((t) => !t.subtask && t.name.toLowerCase() !== 'epic')
+          }
+        }
+        if (defaultParentKey) {
+          // Under a task: only subtask types (Jira subtask boolean = true)
+          const subtaskTypes = types.filter((t) => t.subtask === true)
+          if (subtaskTypes.length > 0) types = subtaskTypes
+        }
         setIssueTypes(types)
-        // Výchozí typ: Story nebo Task
-        setIssueType(types.find((t) => t.name === 'Story') ?? types.find((t) => t.name === 'Task') ?? types[0] ?? null)
+        // Výchozí typ
+        if (defaultParentKey) {
+          setIssueType(types[0] ?? null)
+        } else if (defaultIssueTypeName) {
+          setIssueType(
+            types.find((t) => t.name.toLowerCase() === defaultIssueTypeName.toLowerCase()) ??
+            types.find((t) => t.name === 'Story') ??
+            types.find((t) => t.name === 'Task') ??
+            types[0] ?? null
+          )
+        } else {
+          setIssueType(types.find((t) => t.name === 'Story') ?? types.find((t) => t.name === 'Task') ?? types[0] ?? null)
+        }
       }
       if (usersRes.status === 'fulfilled') setUsers(usersRes.value)
       if (sprintsRes.status === 'fulfilled') {
         const sp = sprintsRes.value as JiraSprint[]
         setSprints(sp)
-        // Výchozí: aktivní sprint
-        setSprint(sp.find((s) => s.state === 'active') ?? null)
+        // Dílčí úkoly nemají sprint — nastavit null a nezobrazovat
+        if (!defaultParentKey) {
+          setSprint(sp.find((s) => s.state === 'active') ?? null)
+        } else {
+          setSprint(null)
+        }
       }
       if (epicsRes.status === 'fulfilled') setEpics((epicsRes.value as any).issues ?? [])
       setDataLoading(false)
@@ -108,22 +144,38 @@ export function CreateIssueModal({ projects, defaultProject, onClose, onCreated 
       }
     }
     if (assignee) fields.assignee = { accountId: assignee.accountId }
-    if (sprint) fields.customfield_10020 = { id: sprint.id }
+    if (sprint) fields.customfield_10020 = sprint.id
     if (storyPoints !== '') fields.customfield_10016 = Number(storyPoints)
     if (labels.length > 0) fields.labels = labels
-    if (epic) fields.customfield_10014 = epic.key // epic link
+    if (defaultParentKey) fields.parent = { key: defaultParentKey } // subtask parent
+
+    // Epic link: next-gen projects use `parent`, classic use `customfield_10014`
+    // Try `parent` first; on 400 fall back to classic field.
+    const epicKey = epic?.key ?? null
 
     try {
+      if (epicKey) fields.parent = { key: epicKey }
       const created = await jiraApi.createIssue(fields)
-      // Načteme plný issue
       const full = await jiraApi.getIssue(created.key)
       setSuccess(true)
-      setTimeout(() => {
-        onCreated(full)
-        onClose()
-      }, 800)
+      setTimeout(() => { onCreated(full); onClose() }, 800)
     } catch (e: any) {
-      setError(e.message)
+      // If linking via parent failed, retry with classic epic-link field
+      if (epicKey && String(e.message).includes('400')) {
+        try {
+          delete fields.parent
+          fields.customfield_10014 = epicKey
+          const created = await jiraApi.createIssue(fields)
+          const full = await jiraApi.getIssue(created.key)
+          setSuccess(true)
+          setTimeout(() => { onCreated(full); onClose() }, 800)
+          return
+        } catch (e2: any) {
+          setError(e2.message)
+        }
+      } else {
+        setError(e.message)
+      }
     } finally {
       setSubmitting(false)
     }
@@ -144,9 +196,24 @@ export function CreateIssueModal({ projects, defaultProject, onClose, onCreated 
       <div className="relative modal-panel rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-800">
-          <div className="flex items-center gap-2">
-            <Plus className="w-4 h-4 text-blue-400" />
-            <h2 className="font-semibold text-gray-100">Nový task</h2>
+          <div className="flex flex-col gap-0.5">
+            <div className="flex items-center gap-2">
+              <Plus className="w-4 h-4 text-blue-400" />
+              <h2 className="font-semibold text-gray-100">
+                Nový {defaultIssueTypeName ?? (defaultParentKey ? 'Subtask' : defaultEpic ? 'Task' : 'Task')}
+              </h2>
+            </div>
+            {(defaultEpic || defaultParentKey) && (
+              <p className="text-xs pl-6" style={{ color: 'var(--c-text-4)' }}>
+                pod&nbsp;
+                <span className="font-mono" style={{ color: 'var(--c-text-3)' }}>
+                  {defaultEpic?.key ?? defaultParentKey}
+                </span>
+                {defaultEpic && (
+                  <span style={{ color: 'var(--c-text-3)' }}> — {defaultEpic.fields.summary}</span>
+                )}
+              </p>
+            )}
           </div>
           <button onClick={onClose} className="btn-icon"><X className="w-4 h-4" /></button>
         </div>
@@ -240,9 +307,10 @@ export function CreateIssueModal({ projects, defaultProject, onClose, onCreated 
                 value={sprint?.id ?? ''}
                 onChange={(e) => setSprint(sprints.find((s) => String(s.id) === e.target.value) ?? null)}
                 className="input w-full"
+                disabled={!!defaultParentKey}
               >
-                <option value="">— Bez sprintu —</option>
-                {sprints.map((s) => (
+                <option value="">{defaultParentKey ? '— Dílčí úkoly nemají sprint —' : '— Bez sprintu —'}</option>
+                {!defaultParentKey && sprints.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.name}{s.state === 'active' ? ' ✓' : ''}
                   </option>
@@ -266,16 +334,22 @@ export function CreateIssueModal({ projects, defaultProject, onClose, onCreated 
             </Field>
 
             <Field label="Epic">
-              <select
-                value={epic?.key ?? ''}
-                onChange={(e) => setEpic(epics.find((ep) => ep.key === e.target.value) ?? null)}
-                className="input w-full"
-              >
-                <option value="">— Bez epicu —</option>
-                {epics.map((ep) => (
-                  <option key={ep.key} value={ep.key}>{ep.key}: {ep.fields.summary}</option>
-                ))}
-              </select>
+              {defaultEpic ? (
+                <div className="input w-full text-sm opacity-70 cursor-not-allowed truncate">
+                  {defaultEpic.key}: {defaultEpic.fields.summary}
+                </div>
+              ) : (
+                <select
+                  value={epic?.key ?? ''}
+                  onChange={(e) => setEpic(epics.find((ep) => ep.key === e.target.value) ?? null)}
+                  className="input w-full"
+                >
+                  <option value="">— Bez epicu —</option>
+                  {epics.map((ep) => (
+                    <option key={ep.key} value={ep.key}>{ep.key}: {ep.fields.summary}</option>
+                  ))}
+                </select>
+              )}
             </Field>
           </div>
 

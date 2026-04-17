@@ -33,6 +33,7 @@ export interface JiraIssueType {
     id: string
     name: string
     iconUrl: string
+    subtask?: boolean
 }
 
 export interface JiraProject {
@@ -113,7 +114,7 @@ export interface JiraTransition {
     to: JiraStatus
 }
 
-export type ViewMode = "board" | "list" | "settings" | "time" | "worklog" | "activity"
+export type ViewMode = "board" | "list" | "tree" | "settings" | "time" | "worklog" | "activity"
 
 export interface JiraChangelogItem {
     field: string

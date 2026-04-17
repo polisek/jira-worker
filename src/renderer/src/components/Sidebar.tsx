@@ -13,6 +13,7 @@ import {
     Activity,
     Star,
     Check,
+    GitBranch,
 } from "lucide-react"
 import { jiraApi } from "../lib/jira-api"
 import { RecentAssignments } from "./RecentAssignments"
@@ -121,6 +122,9 @@ export function Sidebar({
                 </button>
                 <button onClick={() => setView("list")} className={`sidebar-item ${view === "list" ? "active" : ""}`}>
                     <List className="w-4 h-4" /> Seznam
+                </button>
+                <button onClick={() => setView("tree")} className={`sidebar-item ${view === "tree" ? "active" : ""}`}>
+                    <GitBranch className="w-4 h-4" /> Strom
                 </button>
                 <button onClick={() => setView("time")} className={`sidebar-item ${view === "time" ? "active" : ""}`}>
                     <Timer className="w-4 h-4" /> Měření času
