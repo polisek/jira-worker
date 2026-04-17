@@ -61,6 +61,8 @@ jobs:
         run: npm ci
       - name: Nastav verzi z tagu
         run: npm version ${{ needs.tag.outputs.new_tag }} --no-git-tag-version
-      - run: npm run build && npx electron-builder --mac --publish=always
+      - name: Build a release
+        run: npm run build && npx electron-builder --mac --publish=always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_AUTO_DISCOVERY: false
