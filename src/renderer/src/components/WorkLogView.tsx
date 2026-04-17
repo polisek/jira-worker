@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import { ChevronLeft, ChevronRight, X, Search, Plus, Loader2, AlertCircle } from "lucide-react"
 import { jiraApi } from "../lib/jira-api"
 import { useIssues } from "../hooks/useIssues"
-import type { JiraUser, JiraIssue, AppPrefs } from "../types/jira"
+import type { JiraUser, JiraIssue, JiraProject, AppPrefs } from "../types/jira"
 
 interface WorklogCell {
     issueKey: string
@@ -81,13 +81,14 @@ interface DayPopupProps {
     day: Date
     cells: WorklogCell[]
     selectedUser: JiraUser
+    selectedProject: JiraProject | null
     prefs: AppPrefs
     updatedSince: string
     onClose: () => void
     onLogged: (cell: WorklogCell) => void
 }
 
-function DayPopup({ day, cells, selectedUser, prefs, updatedSince, onClose, onLogged }: DayPopupProps) {
+function DayPopup({ day, cells, selectedUser, selectedProject, prefs, updatedSince, onClose, onLogged }: DayPopupProps) {
     const [searchQuery, setSearchQuery] = useState("")
     const [selectedIssue, setSelectedIssue] = useState<JiraIssue | null>(null)
     const [timeInput, setTimeInput] = useState("")
@@ -98,7 +99,7 @@ function DayPopup({ day, cells, selectedUser, prefs, updatedSince, onClose, onLo
     const popupPrefs = { ...prefs, doneMaxAgeDays: -1, maxResults: 5 }
 
     const { issues, loading: issuesLoading } = useIssues({
-        selectedProject: null,
+        selectedProject,
         filter: "mine",
         searchQuery,
         prefs: popupPrefs,
@@ -278,9 +279,10 @@ function DayPopup({ day, cells, selectedUser, prefs, updatedSince, onClose, onLo
 
 interface Props {
     prefs: AppPrefs
+    selectedProject: JiraProject | null
 }
 
-export function WorkLogView({ prefs }: Props) {
+export function WorkLogView({ prefs, selectedProject }: Props) {
     const today = new Date()
     const [currentMonth, setCurrentMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1))
     const updatedSince = toDateStr(new Date(today.getFullYear(), today.getMonth(), 1))
@@ -303,13 +305,13 @@ export function WorkLogView({ prefs }: Props) {
         }).catch(() => {})
     }, [])
 
-    // Load worklogs when month or user changes
+    // Load worklogs when month, user or project changes
     useEffect(() => {
         if (!selectedUser) return
-        loadWorklogs(selectedUser, currentMonth)
-    }, [selectedUser, currentMonth])
+        loadWorklogs(selectedUser, currentMonth, selectedProject)
+    }, [selectedUser, currentMonth, selectedProject])
 
-    const loadWorklogs = useCallback(async (user: JiraUser, monthStart: Date) => {
+    const loadWorklogs = useCallback(async (user: JiraUser, monthStart: Date, project: JiraProject | null) => {
         setLoading(true)
         setError(null)
         const year = monthStart.getFullYear()
@@ -319,7 +321,8 @@ export function WorkLogView({ prefs }: Props) {
         const startMs = new Date(year, month, 1).getTime()
 
         try {
-            const jql = `worklogAuthor = "${user.accountId}" AND worklogDate >= "${start}" AND worklogDate <= "${end}"`
+            const projectClause = project ? ` AND project = "${project.key}"` : ""
+            const jql = `worklogAuthor = "${user.accountId}" AND worklogDate >= "${start}" AND worklogDate <= "${end}"${projectClause}`
             const { issues } = await jiraApi.searchIssues(jql, 200)
 
             const map: WorklogMap = {}
@@ -355,7 +358,7 @@ export function WorkLogView({ prefs }: Props) {
         } finally {
             setLoading(false)
         }
-    }, [])
+    }, [selectedProject])
 
     const handleUserSearch = (q: string) => {
         setUserSearch(q)
@@ -589,6 +592,7 @@ export function WorkLogView({ prefs }: Props) {
                     day={selectedDay}
                     cells={worklogMap[toDateStr(selectedDay)] ?? []}
                     selectedUser={selectedUser}
+                    selectedProject={selectedProject}
                     prefs={prefs}
                     updatedSince={updatedSince}
                     onClose={() => setSelectedDay(null)}

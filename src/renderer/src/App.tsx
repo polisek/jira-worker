@@ -116,7 +116,7 @@ export default function App() {
                     {view === "time" ? (
                         <TimeTrackingView />
                     ) : view === "worklog" ? (
-                        <WorkLogView prefs={prefs} />
+                        <WorkLogView prefs={prefs} selectedProject={selectedProject} />
                     ) : view === "settings" ? (
                         <div className="flex-1 overflow-y-auto flex justify-center px-6 py-2">
                             <SettingsView
