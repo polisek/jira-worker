@@ -192,6 +192,7 @@ export default function App() {
                     {selectedIssue && (
                         <TaskDetail
                             issue={selectedIssue}
+                            prefs={prefs}
                             onClose={() => setSelectedIssue(null)}
                             onUpdate={(updated) => setSelectedIssue(updated)}
                         />

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Clock, Loader } from 'lucide-react'
+import { Clock, Loader, Plus } from 'lucide-react'
 import { jiraApi } from '../lib/jira-api'
 import type { JiraIssue } from '../types/jira'
 
@@ -23,9 +23,10 @@ const timeCache = new Map<string, TimeData>()
 
 interface Props {
   issue: JiraIssue
+  onLogWork?: () => void
 }
 
-export function TimeTracking({ issue }: Props) {
+export function TimeTracking({ issue, onLogWork }: Props) {
   const [data, setData] = useState<TimeData | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -76,17 +77,17 @@ export function TimeTracking({ issue }: Props) {
     }).catch(() => setLoading(false))
   }, [issue.key, issue.fields.timespent])
 
-  if (!data) return null
+  if (!data && !onLogWork) return null
 
-  const hasOriginal = data.original > 0
-  const hasEstimate = data.estimate > 0
-  const hasSpent = data.spent > 0
+  const hasOriginal = data ? data.original > 0 : false
+  const hasEstimate = data ? data.estimate > 0 : false
+  const hasSpent = data ? data.spent > 0 : false
   const subtaskCount = (issue.fields.subtasks ?? []).length
 
   // Progress: kolik z původního odhadu je odpracováno
-  const total = hasOriginal ? data.original : hasEstimate ? data.estimate : 0
-  const progress = total > 0 ? Math.min((data.spent / total) * 100, 100) : 0
-  const isOver = data.spent > total && total > 0
+  const total = data ? (hasOriginal ? data.original : hasEstimate ? data.estimate : 0) : 0
+  const progress = data && total > 0 ? Math.min((data.spent / total) * 100, 100) : 0
+  const isOver = data ? data.spent > total && total > 0 : false
 
   return (
     <div className="px-4 py-3 border-b border-gray-800">
@@ -101,40 +102,53 @@ export function TimeTracking({ issue }: Props) {
           )}
           {loading && <Loader className="w-3 h-3 animate-spin text-gray-600" />}
         </p>
-      </div>
-
-      <div className="flex items-center gap-4 text-xs mb-2">
-        {hasSpent && (
-          <div>
-            <span className={`font-semibold ${isOver ? 'text-red-400' : 'text-blue-400'}`}>
-              {fmt(data.spent)}
-            </span>
-            <span className="text-gray-600 ml-1">odpracováno</span>
-          </div>
-        )}
-        {(hasOriginal || hasEstimate) && (
-          <div>
-            <span className="font-semibold text-gray-300">
-              {fmt(hasOriginal ? data.original : data.estimate)}
-            </span>
-            <span className="text-gray-600 ml-1">{hasOriginal ? 'odhad' : 'zbývá'}</span>
-          </div>
-        )}
-        {hasEstimate && hasOriginal && (
-          <div>
-            <span className="font-semibold text-gray-400">{fmt(data.estimate)}</span>
-            <span className="text-gray-600 ml-1">zbývá</span>
-          </div>
+        {onLogWork && (
+          <button
+            onClick={onLogWork}
+            className="btn-sm flex items-center gap-1 text-xs"
+          >
+            <Plus className="w-3 h-3" />
+            Zaznamenat práci
+          </button>
         )}
       </div>
 
-      {total > 0 && (
-        <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
-          <div
-            className={`h-full rounded-full transition-all ${isOver ? 'bg-red-500' : 'bg-blue-500'}`}
-            style={{ width: `${progress}%` }}
-          />
-        </div>
+      {data && (
+        <>
+          <div className="flex items-center gap-4 text-xs mb-2">
+            {hasSpent && (
+              <div>
+                <span className={`font-semibold ${isOver ? 'text-red-400' : 'text-blue-400'}`}>
+                  {fmt(data.spent)}
+                </span>
+                <span className="text-gray-600 ml-1">odpracováno</span>
+              </div>
+            )}
+            {(hasOriginal || hasEstimate) && (
+              <div>
+                <span className="font-semibold text-gray-300">
+                  {fmt(hasOriginal ? data.original : data.estimate)}
+                </span>
+                <span className="text-gray-600 ml-1">{hasOriginal ? 'odhad' : 'zbývá'}</span>
+              </div>
+            )}
+            {hasEstimate && hasOriginal && (
+              <div>
+                <span className="font-semibold text-gray-400">{fmt(data.estimate)}</span>
+                <span className="text-gray-600 ml-1">zbývá</span>
+              </div>
+            )}
+          </div>
+
+          {total > 0 && (
+            <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all ${isOver ? 'bg-red-500' : 'bg-blue-500'}`}
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          )}
+        </>
       )}
     </div>
   )

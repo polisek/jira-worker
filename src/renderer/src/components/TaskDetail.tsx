@@ -5,10 +5,12 @@ import { adfToText, formatDate } from "../lib/adf-to-text"
 import { UserPicker } from "./UserPicker"
 import { AdfContent } from "./AdfContent"
 import { TimeTracking } from "./TimeTracking"
-import type { JiraIssue, JiraTransition, JiraUser } from "../types/jira"
+import { LogWorkDialog } from "./LogWorkDialog"
+import type { JiraIssue, JiraTransition, JiraUser, AppPrefs } from "../types/jira"
 
 interface Props {
     issue: JiraIssue
+    prefs: AppPrefs
     onClose: () => void
     onUpdate: (updated: JiraIssue) => void
 }
@@ -19,7 +21,7 @@ const statusCategoryClass: Record<string, string> = {
     done: "badge-green",
 }
 
-export function TaskDetail({ issue, onClose, onUpdate }: Props) {
+export function TaskDetail({ issue, prefs, onClose, onUpdate }: Props) {
     const [detail, setDetail] = useState<JiraIssue>(issue)
     const [loading, setLoading] = useState(false)
     const [transitions, setTransitions] = useState<JiraTransition[]>([])
@@ -34,6 +36,7 @@ export function TaskDetail({ issue, onClose, onUpdate }: Props) {
     const [savingDesc, setSavingDesc] = useState(false)
     const [navStack, setNavStack] = useState<JiraIssue[]>([])
     const [panelWidth, setPanelWidth] = useState(480)
+    const [logWorkOpen, setLogWorkOpen] = useState(false)
     const dragStartX = useRef<number | null>(null)
     const dragStartWidth = useRef<number>(480)
 
@@ -328,7 +331,7 @@ export function TaskDetail({ issue, onClose, onUpdate }: Props) {
                 )}
 
                 {/* Čas */}
-                <TimeTracking issue={detail} />
+                <TimeTracking issue={detail} onLogWork={() => setLogWorkOpen(true)} />
 
                 {/* Description */}
                 <div className="px-4 py-3 border-b border-gray-800">
@@ -471,6 +474,15 @@ export function TaskDetail({ issue, onClose, onUpdate }: Props) {
                     <p className="text-xs text-gray-600 mt-1">Ctrl+Enter pro odeslání</p>
                 </div>
             </div>
+
+            {logWorkOpen && (
+                <LogWorkDialog
+                    issue={detail}
+                    dailyWorkHours={prefs.dailyWorkHours}
+                    onClose={() => setLogWorkOpen(false)}
+                    onLogged={() => loadDetail()}
+                />
+            )}
         </div>
     )
 }
