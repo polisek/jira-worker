@@ -90,14 +90,16 @@ app.whenReady().then(() => {
 
     // ── App prefs IPC ─────────────────────────────────────────────
     ipcMain.handle("prefs:get", () => {
-        return store.get("prefs", {
+        const defaults = {
             doneMaxAgeDays: 14,
             defaultFilter: "mine",
             defaultView: "board",
             maxResults: 100,
             pollIntervalMinutes: 2,
             notifWindowHours: 24,
-        })
+            dailyWorkHours: 8,
+        }
+        return { ...defaults, ...(store.get("prefs", {}) as object) }
     })
 
     ipcMain.handle("prefs:set", (_event, prefs) => {

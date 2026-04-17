@@ -165,6 +165,22 @@ export function SettingsView({ onSaveJira, onSavePrefs, initialJira, prefs }: Pr
             ]}
           />
         </OptionRow>
+
+        <OptionRow label="Denní pracovní hodiny" hint="Kolik hodin denně se počítá jako plný úvazek">
+          <Select
+            value={localPrefs.dailyWorkHours}
+            onChange={(v) => setPref('dailyWorkHours', Number(v))}
+            options={[
+              { value: 4, label: '4 hodiny' },
+              { value: 6, label: '6 hodin' },
+              { value: 7, label: '7 hodin' },
+              { value: 7.5, label: '7,5 hodiny' },
+              { value: 8, label: '8 hodin' },
+              { value: 9, label: '9 hodin' },
+              { value: 10, label: '10 hodin' }
+            ]}
+          />
+        </OptionRow>
       </Section>
 
       {/* ── Notifikace ── */}

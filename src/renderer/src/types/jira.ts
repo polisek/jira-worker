@@ -113,7 +113,15 @@ export interface JiraTransition {
     to: JiraStatus
 }
 
-export type ViewMode = "board" | "list" | "settings" | "time"
+export type ViewMode = "board" | "list" | "settings" | "time" | "worklog"
+
+export interface JiraWorklog {
+    id: string
+    author: JiraUser
+    timeSpentSeconds: number
+    started: string // ISO datetime
+    comment?: { content: ContentNode[] }
+}
 
 export interface TimeEntry {
     id: string
@@ -135,6 +143,7 @@ export interface AppPrefs {
     pollIntervalMinutes: number
     notifWindowHours: number
     selectedProjectKey: string | null
+    dailyWorkHours: number
 }
 
 export interface AdvancedFilter {
@@ -164,4 +173,5 @@ export const DEFAULT_PREFS: AppPrefs = {
     pollIntervalMinutes: 2,
     notifWindowHours: 24,
     selectedProjectKey: null,
+    dailyWorkHours: 8,
 }

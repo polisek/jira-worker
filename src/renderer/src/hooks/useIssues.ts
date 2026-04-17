@@ -9,9 +9,11 @@ interface Options {
     prefs: AppPrefs
     sprint?: string // 'active' | 'all' | 'none' | sprint id
     advancedFilter?: AdvancedFilter | null
+    assigneeAccountId?: string // přepíše currentUser() pro filter="mine"
+    updatedSince?: string      // "YYYY-MM-DD" — přidá updated >= podmínku
 }
 
-export function useIssues({ selectedProject, filter, searchQuery, prefs, sprint, advancedFilter }: Options) {
+export function useIssues({ selectedProject, filter, searchQuery, prefs, sprint, advancedFilter, assigneeAccountId, updatedSince }: Options) {
     const [issues, setIssues] = useState<JiraIssue[]>([])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -25,9 +27,13 @@ export function useIssues({ selectedProject, filter, searchQuery, prefs, sprint,
         }
 
         if (filter === "mine") {
-            parts.push("assignee = currentUser()")
+            parts.push(assigneeAccountId ? `assignee = "${assigneeAccountId}"` : "assignee = currentUser()")
         } else if (filter === "unassigned") {
             parts.push("assignee is EMPTY")
+        }
+
+        if (updatedSince) {
+            parts.push(`updated >= "${updatedSince}"`)
         }
 
         if (searchQuery.trim()) {
@@ -66,7 +72,7 @@ export function useIssues({ selectedProject, filter, searchQuery, prefs, sprint,
         const where = parts.length > 0 ? parts.join(" AND ") + " " : ""
         console.log(where)
         return `${where}ORDER BY updated DESC`
-    }, [selectedProject, filter, searchQuery, prefs.doneMaxAgeDays, sprint, advancedFilter])
+    }, [selectedProject, filter, searchQuery, prefs.doneMaxAgeDays, sprint, advancedFilter, assigneeAccountId, updatedSince])
 
     const load = useCallback(async () => {
         setLoading(true)

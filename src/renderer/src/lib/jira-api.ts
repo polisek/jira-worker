@@ -7,6 +7,7 @@ import type {
     JiraIssueType,
     JiraSprint,
     JiraStatus,
+    JiraWorklog,
 } from "../types/jira"
 
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
@@ -147,9 +148,10 @@ export const jiraApi = {
     },
 
     // Worklog — zalogovat čas do Jiry
-    logWork(issueKey: string, timeSpentSeconds: number, comment?: string): Promise<void> {
+    logWork(issueKey: string, timeSpentSeconds: number, comment?: string, started?: string): Promise<void> {
         return request("POST", `/issue/${issueKey}/worklog`, {
             timeSpentSeconds,
+            ...(started ? { started } : {}),
             comment: comment
                 ? {
                       type: "doc",
@@ -158,6 +160,15 @@ export const jiraApi = {
                   }
                 : undefined,
         })
+    },
+
+    getIssueWorklogs(issueKey: string, startedAfter?: number): Promise<{ worklogs: JiraWorklog[]; total: number }> {
+        const qs = startedAfter ? `?startedAfter=${startedAfter}&maxResults=1000` : `?maxResults=1000`
+        return request("GET", `/issue/${issueKey}/worklog${qs}`)
+    },
+
+    searchUsers(query: string): Promise<JiraUser[]> {
+        return request("GET", `/user/search?query=${encodeURIComponent(query)}&maxResults=30`)
     },
 
     // Statusy
