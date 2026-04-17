@@ -10,6 +10,7 @@ import { useNotifications } from "./hooks/useNotifications"
 import { UpdateBanner } from "./components/UpdateBanner"
 import { TimeTrackingView } from "./components/TimeTrackingView"
 import { WorkLogView } from "./components/WorkLogView"
+import { ActivityView } from "./components/ActivityView"
 import type { JiraSettings, JiraIssue, JiraProject, ViewMode, AppPrefs } from "./types/jira"
 import { DEFAULT_PREFS as DEFAULTS } from "./types/jira"
 
@@ -64,6 +65,40 @@ export default function App() {
         setPrefs(p)
     }
 
+    const handleSaveHiddenProjects = (keys: string[]) => {
+        const updated = { ...prefs, hiddenProjectKeys: keys }
+        setPrefs(updated)
+        window.api.setPrefs(updated)
+        if (selectedProject && keys.includes(selectedProject.key)) {
+            setSelectedProject(null)
+        }
+    }
+
+    const applyTheme = (theme: AppPrefs["theme"]) => {
+        const root = document.documentElement
+        if (theme === "light") {
+            root.classList.add("light")
+        } else if (theme === "dark") {
+            root.classList.remove("light")
+        } else {
+            const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
+            root.classList.toggle("light", !prefersDark)
+        }
+    }
+
+    useEffect(() => {
+        applyTheme(prefs.theme ?? "dark")
+
+        if ((prefs.theme ?? "dark") === "auto") {
+            const mq = window.matchMedia("(prefers-color-scheme: dark)")
+            const handler = (e: MediaQueryListEvent) =>
+                document.documentElement.classList.toggle("light", !e.matches)
+            mq.addEventListener("change", handler)
+            return () => mq.removeEventListener("change", handler)
+        }
+        return undefined
+    }, [prefs.theme])
+
     if (!settingsLoaded) {
         return (
             <div className="app-bg flex items-center justify-center h-screen">
@@ -110,11 +145,19 @@ export default function App() {
                     setSearchQuery={setSearchQuery}
                     notifications={notifications}
                     onSelectIssue={setSelectedIssue}
+                    hiddenProjectKeys={prefs.hiddenProjectKeys ?? []}
+                    onSaveHiddenProjects={handleSaveHiddenProjects}
                 />
 
                 <main className="flex-1 overflow-hidden flex">
                     {view === "time" ? (
                         <TimeTrackingView />
+                    ) : view === "activity" ? (
+                        <ActivityView
+                            prefs={prefs}
+                            selectedProject={selectedProject}
+                            onSelectIssue={setSelectedIssue}
+                        />
                     ) : view === "worklog" ? (
                         <WorkLogView prefs={prefs} selectedProject={selectedProject} />
                     ) : view === "settings" ? (

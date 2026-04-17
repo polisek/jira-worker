@@ -110,7 +110,7 @@ export function ListView({ selectedProject, projects, filter, searchQuery, onSel
 
             <div className="flex-1 overflow-y-auto">
                 <table className="w-full text-sm">
-                    <thead className="sticky top-0 bg-gray-900 border-b border-gray-800">
+                    <thead className="sticky top-0 table-head">
                         <tr>
                             <th className="text-left px-4 py-2.5 text-gray-500 font-medium w-28">Klíč</th>
                             <th className="text-left px-4 py-2.5 text-gray-500 font-medium">Název</th>

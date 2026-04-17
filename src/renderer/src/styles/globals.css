@@ -2,6 +2,72 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Theme variables ──────────────────────────────────────────────── */
+
+:root {
+    /* Dark theme (default) */
+    --c-bg-app:       #0f1117;
+    --c-bg-sidebar:   #080b10;
+    --c-bg-titlebar:  #0a0c12;
+    --c-bg-board:     #0d1117;
+    --c-bg-detail:    #0a0d14;
+    --c-bg-card:      rgba(31, 41, 55, 0.6);
+    --c-bg-card-alt:  rgba(31, 41, 55, 0.3);
+    --c-bg-input:     rgba(31, 41, 55, 0.6);
+    --c-border:       #1f2937;
+    --c-border-card:  rgba(55, 65, 81, 0.5);
+    --c-text:         #e2e8f0;
+    --c-text-2:       #d1d5db;
+    --c-text-3:       #9ca3af;
+    --c-text-4:       #6b7280;
+    --c-scrollbar:    #374151;
+    --c-scrollbar-h:  #4b5563;
+    --c-btn-sec:      #374151;
+    --c-btn-sec-h:    #4b5563;
+    --c-btn-sec-t:    #e2e8f0;
+    --c-btn-sm:       rgba(55, 65, 81, 0.6);
+    --c-btn-icon-h:   #1f2937;
+    --c-item-h:       rgba(31, 41, 55, 0.6);
+    --c-item-h-t:     #e2e8f0;
+    --c-spinner:      #374151;
+    --c-code-bg:      #1f2937;
+    --c-pre-bg:       rgba(31, 41, 55, 0.8);
+    --c-quote-border: #4b5563;
+    --c-shadow:       rgba(0, 0, 0, 0.3);
+}
+
+:root.light {
+    /* Light theme */
+    --c-bg-app:       #f5f6f8;
+    --c-bg-sidebar:   #eef0f3;
+    --c-bg-titlebar:  #e8eaed;
+    --c-bg-board:     #edf0f2;
+    --c-bg-detail:    #f0f2f5;
+    --c-bg-card:      rgba(255, 255, 255, 0.8);
+    --c-bg-card-alt:  rgba(255, 255, 255, 0.6);
+    --c-bg-input:     rgba(255, 255, 255, 0.9);
+    --c-border:       #d0d7de;
+    --c-border-card:  rgba(208, 215, 222, 0.7);
+    --c-text:         #24292f;
+    --c-text-2:       #57606a;
+    --c-text-3:       #6e7781;
+    --c-text-4:       #8c959f;
+    --c-scrollbar:    #c8d0d8;
+    --c-scrollbar-h:  #8c959f;
+    --c-btn-sec:      #e5e7eb;
+    --c-btn-sec-h:    #d1d5db;
+    --c-btn-sec-t:    #24292f;
+    --c-btn-sm:       rgba(229, 231, 235, 0.8);
+    --c-btn-icon-h:   #e5e7eb;
+    --c-item-h:       rgba(0, 0, 0, 0.05);
+    --c-item-h-t:     #24292f;
+    --c-spinner:      #d0d7de;
+    --c-code-bg:      rgba(208, 215, 222, 0.4);
+    --c-pre-bg:       rgba(208, 215, 222, 0.3);
+    --c-quote-border: #d0d7de;
+    --c-shadow:       rgba(0, 0, 0, 0.08);
+}
+
 @layer base {
     * {
         box-sizing: border-box;
@@ -11,8 +77,8 @@
 
     body {
         font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
-        background: #0f1117;
-        color: #e2e8f0;
+        background: var(--c-bg-app);
+        color: var(--c-text);
         overflow: hidden;
         user-select: none;
     }
@@ -25,74 +91,96 @@
         background: transparent;
     }
     ::-webkit-scrollbar-thumb {
-        background: #374151;
+        background: var(--c-scrollbar);
         border-radius: 3px;
     }
     ::-webkit-scrollbar-thumb:hover {
-        background: #4b5563;
+        background: var(--c-scrollbar-h);
     }
 }
 
 @layer components {
     .app-bg {
-        @apply bg-[#0f1117] text-gray-200;
+        background: var(--c-bg-app);
+        color: var(--c-text);
     }
 
     /* Title bar */
     .titlebar {
         height: 38px;
-        background: #0a0c12;
-        border-bottom: 1px solid #1f2937;
+        background: var(--c-bg-titlebar);
+        border-bottom: 1px solid var(--c-border);
         flex-shrink: 0;
     }
 
     .titlebar-btn {
-        @apply w-7 h-7 flex items-center justify-center rounded text-gray-500 hover:text-gray-300 hover:bg-gray-800 transition-colors;
+        @apply w-7 h-7 flex items-center justify-center rounded transition-colors;
+        color: var(--c-text-3);
+    }
+    .titlebar-btn:hover {
+        color: var(--c-text);
+        background: var(--c-btn-icon-h);
     }
 
     .titlebar-btn-close:hover {
-        @apply bg-red-500/80 text-white;
+        @apply bg-red-500/80 !important;
+        color: white !important;
     }
 
     /* Sidebar */
     .sidebar {
-        background: #080b10;
-        border-right: 1px solid #1f2937;
+        background: var(--c-bg-sidebar);
+        border-right: 1px solid var(--c-border);
     }
 
     .sidebar-label {
-        @apply text-xs font-semibold text-gray-600 uppercase tracking-wider px-2 mb-1 mt-2;
+        @apply text-xs font-semibold uppercase tracking-wider px-2 mb-1 mt-2;
+        color: var(--c-text-4);
         display: flex;
         align-items: center;
     }
 
     .sidebar-item {
-        @apply flex items-center gap-2.5 w-full px-2 py-1.5 text-sm text-gray-400 rounded-md hover:bg-gray-800/60 hover:text-gray-200 transition-colors text-left;
+        @apply flex items-center gap-2.5 w-full px-2 py-1.5 text-sm rounded-md transition-colors text-left;
+        color: var(--c-text-3);
+    }
+    .sidebar-item:hover {
+        background: var(--c-item-h);
+        color: var(--c-item-h-t);
     }
 
     .sidebar-item.active {
-        @apply bg-blue-500/15 text-blue-300;
+        @apply bg-blue-500/15;
+        color: #60a5fa;
     }
 
     /* Board */
     .board-column {
-        background: #0d1117;
+        background: var(--c-bg-board);
         border-radius: 10px;
-        border: 1px solid #1f2937;
+        border: 1px solid var(--c-border);
         padding: 12px;
     }
 
     /* Issue card */
     .issue-card {
-        @apply bg-gray-800/60 border border-gray-700/50 rounded-lg p-3 hover:border-gray-600 hover:bg-gray-800/80 transition-all;
+        background: var(--c-bg-card);
+        border: 1px solid var(--c-border-card);
+        @apply rounded-lg p-3 transition-all;
+    }
+    .issue-card:hover {
+        border-color: var(--c-border);
     }
 
     .issue-card.skeleton {
-        @apply animate-pulse bg-gray-800/30 border-gray-800;
+        @apply animate-pulse;
+        background: var(--c-bg-card-alt);
+        border-color: transparent;
     }
 
     .issue-card[draggable="true"]:hover {
-        @apply border-gray-500 shadow-lg shadow-black/30;
+        box-shadow: 0 4px 12px var(--c-shadow);
+        border-color: var(--c-text-4);
     }
 
     .issue-card[draggable="true"]:active {
@@ -101,12 +189,14 @@
 
     /* Detail panel */
     .detail-panel {
-        background: #0a0d14;
+        background: var(--c-bg-detail);
     }
 
     /* Settings card */
     .settings-card {
-        @apply bg-gray-800/30 border border-gray-700/50 rounded-xl p-6;
+        background: var(--c-bg-card-alt);
+        border: 1px solid var(--c-border-card);
+        @apply rounded-xl p-6;
     }
 
     /* Badges */
@@ -115,15 +205,17 @@
     }
 
     .badge-gray {
-        @apply bg-gray-700/60 text-gray-300;
+        background: var(--c-btn-sec);
+        color: var(--c-text-2);
     }
 
     .badge-blue {
-        @apply bg-blue-500/20 text-blue-300;
+        @apply bg-blue-500/20 text-blue-400;
     }
 
     .badge-green {
-        @apply bg-green-500/20 text-green-300;
+        @apply bg-green-500/20;
+        color: #16a34a;
     }
 
     /* Buttons */
@@ -132,7 +224,12 @@
     }
 
     .btn-secondary {
-        @apply bg-gray-700 hover:bg-gray-600 text-gray-200 font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+        @apply font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+        background: var(--c-btn-sec);
+        color: var(--c-btn-sec-t);
+    }
+    .btn-secondary:hover:not(:disabled) {
+        background: var(--c-btn-sec-h);
     }
 
     .btn-danger {
@@ -140,25 +237,49 @@
     }
 
     .btn-sm {
-        @apply flex items-center gap-1 bg-gray-700/60 hover:bg-gray-700 text-gray-300 text-xs px-2.5 py-1 rounded-md transition-colors disabled:opacity-50 border border-gray-600/50;
+        @apply flex items-center gap-1 text-xs px-2.5 py-1 rounded-md transition-colors disabled:opacity-50;
+        background: var(--c-btn-sm);
+        color: var(--c-text-2);
+        border: 1px solid var(--c-border-card);
+    }
+    .btn-sm:hover:not(:disabled) {
+        background: var(--c-btn-sec);
     }
 
     .btn-icon {
-        @apply w-7 h-7 flex items-center justify-center rounded text-gray-500 hover:text-gray-300 hover:bg-gray-800 transition-colors disabled:opacity-50;
+        @apply w-7 h-7 flex items-center justify-center rounded transition-colors disabled:opacity-50;
+        color: var(--c-text-3);
+    }
+    .btn-icon:hover:not(:disabled) {
+        color: var(--c-text);
+        background: var(--c-btn-icon-h);
     }
 
     /* Inputs */
     .input {
-        @apply bg-gray-800/60 border border-gray-700 text-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition-colors placeholder-gray-600;
+        @apply rounded-lg px-3 py-2 text-sm outline-none transition-colors;
+        background: var(--c-bg-input);
+        border: 1px solid var(--c-border);
+        color: var(--c-text);
+    }
+    .input::placeholder {
+        color: var(--c-text-4);
+    }
+    .input:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.3);
     }
 
     .form-label {
-        @apply block text-sm font-medium text-gray-400 mb-1.5;
+        @apply block text-sm font-medium mb-1.5;
+        color: var(--c-text-2);
     }
 
     /* Spinner */
     .spinner {
-        @apply w-8 h-8 border-2 border-gray-700 border-t-blue-500 rounded-full animate-spin;
+        @apply w-8 h-8 border-2 rounded-full animate-spin;
+        border-color: var(--c-spinner);
+        border-top-color: #3b82f6;
     }
 
     /* ADF content */
@@ -181,15 +302,20 @@
     .adf-content h1,
     .adf-content h2,
     .adf-content h3 {
-        @apply font-semibold text-gray-200 mb-2;
+        @apply font-semibold mb-2;
+        color: var(--c-text);
     }
 
     .adf-content code {
-        @apply bg-gray-800 text-blue-300 px-1 py-0.5 rounded text-xs font-mono;
+        background: var(--c-code-bg);
+        color: #60a5fa;
+        @apply px-1 py-0.5 rounded text-xs font-mono;
     }
 
     .adf-content pre {
-        @apply bg-gray-800/80 border border-gray-700 rounded-lg p-3 mb-2 overflow-x-auto;
+        background: var(--c-pre-bg);
+        border: 1px solid var(--c-border);
+        @apply rounded-lg p-3 mb-2 overflow-x-auto;
     }
 
     .adf-content pre code {
@@ -197,23 +323,28 @@
     }
 
     .adf-content blockquote {
-        @apply border-l-2 border-gray-600 pl-3 text-gray-500 italic mb-2;
+        border-left: 2px solid var(--c-quote-border);
+        color: var(--c-text-3);
+        @apply pl-3 italic mb-2;
     }
 
     .adf-content a {
-        @apply text-blue-400 hover:text-blue-300 underline;
+        @apply text-blue-500 hover:text-blue-400 underline;
     }
 
     .adf-content hr {
-        @apply border-gray-700 my-3;
+        border-color: var(--c-border);
+        @apply my-3;
     }
 
     .adf-content strong {
-        @apply font-semibold text-gray-200;
+        @apply font-semibold;
+        color: var(--c-text);
     }
 
     .adf-img {
-        @apply max-w-full rounded-lg border border-gray-700 my-2;
+        border: 1px solid var(--c-border);
+        @apply max-w-full rounded-lg my-2;
         display: block;
     }
 
@@ -230,11 +361,15 @@
     }
 
     .adf-inline-card {
-        @apply text-blue-400 hover:text-blue-300 underline text-xs bg-gray-800 px-1.5 py-0.5 rounded;
+        color: #60a5fa;
+        background: var(--c-code-bg);
+        @apply hover:text-blue-300 underline text-xs px-1.5 py-0.5 rounded;
     }
 
     .adf-block-card {
-        @apply bg-gray-800/60 border border-gray-700 rounded-lg p-2 my-2 text-xs;
+        background: var(--c-bg-card);
+        border: 1px solid var(--c-border);
+        @apply rounded-lg p-2 my-2 text-xs;
     }
 
     .adf-mention {
@@ -244,4 +379,58 @@
     .adf-emoji {
         @apply text-base;
     }
+
+    /* Modal / dialog panel */
+    .modal-panel {
+        background: var(--c-bg-detail);
+        border: 1px solid var(--c-border);
+    }
+
+    /* Table */
+    .table-head {
+        background: var(--c-bg-sidebar);
+        border-bottom: 1px solid var(--c-border);
+    }
 }
+
+/* ── Light mode overrides for Tailwind gray utilities ─────────────── */
+/* These are unlayered so they take priority over @layer utilities     */
+
+:root.light .text-gray-100 { color: #111827; }
+:root.light .text-gray-200 { color: #1f2937; }
+:root.light .text-gray-300 { color: #374151; }
+:root.light .text-gray-400 { color: #4b5563; }
+:root.light .text-gray-500 { color: #6b7280; }
+:root.light .text-gray-600 { color: #9ca3af; }
+
+:root.light .hover\:text-gray-200:hover { color: #111827; }
+:root.light .hover\:text-gray-300:hover { color: #374151; }
+
+:root.light .border-gray-700 { border-color: #d0d7de; }
+:root.light .border-gray-600 { border-color: #e2e8f0; }
+:root.light .border-gray-700\/60 { border-color: rgba(208, 215, 222, 0.7); }
+:root.light .border-gray-700\/50 { border-color: rgba(208, 215, 222, 0.6); }
+
+:root.light .bg-gray-800 { background-color: #f0f2f5; }
+:root.light .bg-gray-700 { background-color: #e5e7eb; }
+:root.light .bg-gray-800\/60 { background-color: rgba(255, 255, 255, 0.8); }
+:root.light .bg-gray-800\/30 { background-color: rgba(255, 255, 255, 0.6); }
+:root.light .bg-gray-700\/60 { background-color: rgba(229, 231, 235, 0.8); }
+
+:root.light .hover\:bg-gray-800:hover { background-color: #e5e7eb; }
+:root.light .hover\:bg-gray-700:hover { background-color: #d1d5db; }
+
+/* Table header & rows */
+:root.light .bg-gray-900 { background-color: #eef0f3; }
+:root.light .border-gray-800 { border-color: #d0d7de; }
+:root.light .border-gray-800\/50 { border-color: rgba(208, 215, 222, 0.6); }
+:root.light .bg-gray-800\/20 { background-color: rgba(208, 215, 222, 0.15); }
+:root.light .hover\:bg-gray-800\/40:hover { background-color: rgba(208, 215, 222, 0.35); }
+
+/* Calendar cells */
+:root.light .bg-gray-900\/10 { background-color: rgba(238, 240, 243, 0.5); }
+:root.light .bg-gray-900\/20 { background-color: rgba(220, 224, 230, 0.4); }
+:root.light .bg-gray-900\/30 { background-color: rgba(226, 232, 240, 0.45); }
+:root.light .border-gray-800\/30 { border-color: rgba(208, 215, 222, 0.5); }
+:root.light .hover\:border-gray-600\/60:hover { border-color: rgba(144, 163, 181, 0.7); }
+:root.light .hover\:bg-gray-800\/60:hover { background-color: rgba(255, 255, 255, 0.9); }

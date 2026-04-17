@@ -39,4 +39,7 @@ export interface AppPrefs {
     pollIntervalMinutes: number
     notifWindowHours: number
     selectedProjectKey: string | null
+    dailyWorkHours: number
+    theme: "dark" | "light" | "auto"
+    hiddenProjectKeys: string[]
 }

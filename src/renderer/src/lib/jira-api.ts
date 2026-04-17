@@ -8,6 +8,7 @@ import type {
     JiraSprint,
     JiraStatus,
     JiraWorklog,
+    JiraChangelog,
 } from "../types/jira"
 
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
@@ -169,6 +170,10 @@ export const jiraApi = {
 
     searchUsers(query: string): Promise<JiraUser[]> {
         return request("GET", `/user/search?query=${encodeURIComponent(query)}&maxResults=30`)
+    },
+
+    getIssueChangelog(issueKey: string): Promise<{ values: JiraChangelog[]; total: number }> {
+        return request("GET", `/issue/${issueKey}/changelog?maxResults=100`)
     },
 
     // Statusy

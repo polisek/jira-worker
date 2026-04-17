@@ -141,7 +141,7 @@ export function CreateIssueModal({ projects, defaultProject, onClose, onCreated 
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative bg-gray-900 border border-gray-700 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+      <div className="relative modal-panel rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-800">
           <div className="flex items-center gap-2">

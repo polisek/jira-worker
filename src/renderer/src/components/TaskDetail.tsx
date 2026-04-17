@@ -386,7 +386,7 @@ export function TaskDetail({ issue, onClose, onUpdate }: Props) {
                         <p className="text-xs text-gray-500 mb-2">Podúkoly ({detail.fields.subtasks.length})</p>
                         <div className="flex flex-col gap-1">
                             {detail.fields.subtasks.map((s) => (
-                                <div key={s.id} className="flex items-center gap-2 py-1.5 px-2 rounded bg-gray-800/50">
+                                <div key={s.id} className="flex items-center gap-2 py-1.5 px-2 rounded" style={{ background: 'var(--c-bg-card)' }}>
                                     <img src={s.fields.issuetype.iconUrl} alt="" className="w-3.5 h-3.5 shrink-0" />
                                     <button
                                         className="text-xs font-mono text-blue-400 hover:text-blue-300 hover:underline shrink-0"

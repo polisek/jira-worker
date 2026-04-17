@@ -113,7 +113,20 @@ export interface JiraTransition {
     to: JiraStatus
 }
 
-export type ViewMode = "board" | "list" | "settings" | "time" | "worklog"
+export type ViewMode = "board" | "list" | "settings" | "time" | "worklog" | "activity"
+
+export interface JiraChangelogItem {
+    field: string
+    fromString: string | null
+    toString: string | null
+}
+
+export interface JiraChangelog {
+    id: string
+    author: JiraUser
+    created: string
+    items: JiraChangelogItem[]
+}
 
 export interface JiraWorklog {
     id: string
@@ -144,6 +157,8 @@ export interface AppPrefs {
     notifWindowHours: number
     selectedProjectKey: string | null
     dailyWorkHours: number
+    theme: "dark" | "light" | "auto"
+    hiddenProjectKeys: string[]
 }
 
 export interface AdvancedFilter {
@@ -174,4 +189,6 @@ export const DEFAULT_PREFS: AppPrefs = {
     notifWindowHours: 24,
     selectedProjectKey: null,
     dailyWorkHours: 8,
+    theme: "dark",
+    hiddenProjectKeys: [],
 }

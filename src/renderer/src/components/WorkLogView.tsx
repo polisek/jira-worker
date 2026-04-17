@@ -14,8 +14,18 @@ type WorklogMap = Record<string, WorklogCell[]>
 
 const DAYS_CZ = ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"]
 const MONTHS_CZ = [
-    "Leden", "Únor", "Březen", "Duben", "Květen", "Červen",
-    "Červenec", "Srpen", "Září", "Říjen", "Listopad", "Prosinec",
+    "Leden",
+    "Únor",
+    "Březen",
+    "Duben",
+    "Květen",
+    "Červen",
+    "Červenec",
+    "Srpen",
+    "Září",
+    "Říjen",
+    "Listopad",
+    "Prosinec",
 ]
 
 function toDateStr(date: Date): string {
@@ -88,7 +98,16 @@ interface DayPopupProps {
     onLogged: (cell: WorklogCell) => void
 }
 
-function DayPopup({ day, cells, selectedUser, selectedProject, prefs, updatedSince, onClose, onLogged }: DayPopupProps) {
+function DayPopup({
+    day,
+    cells,
+    selectedUser,
+    selectedProject,
+    prefs,
+    updatedSince,
+    onClose,
+    onLogged,
+}: DayPopupProps) {
     const [searchQuery, setSearchQuery] = useState("")
     const [selectedIssue, setSelectedIssue] = useState<JiraIssue | null>(null)
     const [timeInput, setTimeInput] = useState("")
@@ -134,12 +153,17 @@ function DayPopup({ day, cells, selectedUser, selectedProject, prefs, updatedSin
         }
     }
 
-    const dateLabel = day.toLocaleDateString("cs-CZ", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
+    const dateLabel = day.toLocaleDateString("cs-CZ", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+    })
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={onClose}>
             <div
-                className="bg-[#151820] border border-gray-700/60 rounded-xl shadow-2xl w-full max-w-md mx-4 flex flex-col max-h-[90vh] overflow-hidden"
+                className="modal-panel rounded-xl shadow-2xl w-full max-w-md mx-4 flex flex-col max-h-[90vh] overflow-hidden"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
@@ -163,7 +187,9 @@ function DayPopup({ day, cells, selectedUser, selectedProject, prefs, updatedSin
                                     <div key={i} className="flex items-center justify-between gap-2">
                                         <span className="text-xs font-mono text-blue-400 shrink-0">{c.issueKey}</span>
                                         <span className="text-xs text-gray-400 truncate flex-1">{c.issueSummary}</span>
-                                        <span className="text-xs text-gray-300 shrink-0">{formatSeconds(c.timeSpentSeconds)}</span>
+                                        <span className="text-xs text-gray-300 shrink-0">
+                                            {formatSeconds(c.timeSpentSeconds)}
+                                        </span>
                                     </div>
                                 ))}
                             </div>
@@ -188,7 +214,10 @@ function DayPopup({ day, cells, selectedUser, selectedProject, prefs, updatedSin
                                 <input
                                     type="text"
                                     value={searchQuery}
-                                    onChange={(e) => { setSearchQuery(e.target.value); setSelectedIssue(null) }}
+                                    onChange={(e) => {
+                                        setSearchQuery(e.target.value)
+                                        setSelectedIssue(null)
+                                    }}
                                     placeholder="Hledat úkol…"
                                     className="input w-full pl-8 text-sm"
                                 />
@@ -200,9 +229,16 @@ function DayPopup({ day, cells, selectedUser, selectedProject, prefs, updatedSin
                             {/* Selected issue badge */}
                             {selectedIssue && (
                                 <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/30 mb-2">
-                                    <span className="text-xs font-mono text-blue-400 shrink-0">{selectedIssue.key}</span>
-                                    <span className="text-xs text-gray-300 truncate flex-1">{selectedIssue.fields.summary}</span>
-                                    <button onClick={() => setSelectedIssue(null)} className="text-gray-500 hover:text-gray-300 shrink-0">
+                                    <span className="text-xs font-mono text-blue-400 shrink-0">
+                                        {selectedIssue.key}
+                                    </span>
+                                    <span className="text-xs text-gray-300 truncate flex-1">
+                                        {selectedIssue.fields.summary}
+                                    </span>
+                                    <button
+                                        onClick={() => setSelectedIssue(null)}
+                                        className="text-gray-500 hover:text-gray-300 shrink-0"
+                                    >
                                         <X className="w-3 h-3" />
                                     </button>
                                 </div>
@@ -217,12 +253,18 @@ function DayPopup({ day, cells, selectedUser, selectedProject, prefs, updatedSin
                                             onClick={() => setSelectedIssue(issue)}
                                             className="flex items-start gap-2 px-3 py-2 hover:bg-gray-800/60 text-left border-b border-gray-800/40 last:border-b-0 transition-colors"
                                         >
-                                            <span className="text-xs font-mono text-blue-400 shrink-0 mt-0.5">{issue.key}</span>
-                                            <span className="text-xs text-gray-300 line-clamp-2">{issue.fields.summary}</span>
+                                            <span className="text-xs font-mono text-blue-400 shrink-0 mt-0.5">
+                                                {issue.key}
+                                            </span>
+                                            <span className="text-xs text-gray-300 line-clamp-2">
+                                                {issue.fields.summary}
+                                            </span>
                                         </button>
                                     ))}
                                     {!issuesLoading && issues.length === 0 && (
-                                        <p className="text-xs text-gray-500 px-3 py-3 text-center">Žádné úkoly nenalezeny</p>
+                                        <p className="text-xs text-gray-500 px-3 py-3 text-center">
+                                            Žádné úkoly nenalezeny
+                                        </p>
                                     )}
                                 </div>
                             )}
@@ -263,10 +305,15 @@ function DayPopup({ day, cells, selectedUser, selectedProject, prefs, updatedSin
                             disabled={!selectedIssue || !timeInput || submitting}
                             className="btn-primary flex items-center justify-center gap-2"
                         >
-                            {submitting
-                                ? <><Loader2 className="w-4 h-4 animate-spin" /> Logování…</>
-                                : <><Plus className="w-4 h-4" /> Zalogovat</>
-                            }
+                            {submitting ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 animate-spin" /> Logování…
+                                </>
+                            ) : (
+                                <>
+                                    <Plus className="w-4 h-4" /> Zalogovat
+                                </>
+                            )}
                         </button>
                     </div>
                 </div>
@@ -299,10 +346,13 @@ export function WorkLogView({ prefs, selectedProject }: Props) {
 
     // Load myself on mount
     useEffect(() => {
-        jiraApi.getMyself().then((u) => {
-            setMyself(u)
-            setSelectedUser(u)
-        }).catch(() => {})
+        jiraApi
+            .getMyself()
+            .then((u) => {
+                setMyself(u)
+                setSelectedUser(u)
+            })
+            .catch(() => {})
     }, [])
 
     // Load worklogs when month, user or project changes
@@ -311,59 +361,65 @@ export function WorkLogView({ prefs, selectedProject }: Props) {
         loadWorklogs(selectedUser, currentMonth, selectedProject)
     }, [selectedUser, currentMonth, selectedProject])
 
-    const loadWorklogs = useCallback(async (user: JiraUser, monthStart: Date, project: JiraProject | null) => {
-        setLoading(true)
-        setError(null)
-        const year = monthStart.getFullYear()
-        const month = monthStart.getMonth()
-        const start = toDateStr(new Date(year, month, 1))
-        const end = toDateStr(new Date(year, month + 1, 0))
-        const startMs = new Date(year, month, 1).getTime()
+    const loadWorklogs = useCallback(
+        async (user: JiraUser, monthStart: Date, project: JiraProject | null) => {
+            setLoading(true)
+            setError(null)
+            const year = monthStart.getFullYear()
+            const month = monthStart.getMonth()
+            const start = toDateStr(new Date(year, month, 1))
+            const end = toDateStr(new Date(year, month + 1, 0))
+            const startMs = new Date(year, month, 1).getTime()
 
-        try {
-            const projectClause = project ? ` AND project = "${project.key}"` : ""
-            const jql = `worklogAuthor = "${user.accountId}" AND worklogDate >= "${start}" AND worklogDate <= "${end}"${projectClause}`
-            const { issues } = await jiraApi.searchIssues(jql, 200)
+            try {
+                const projectClause = project ? ` AND project = "${project.key}"` : ""
+                const jql = `worklogAuthor = "${user.accountId}" AND worklogDate >= "${start}" AND worklogDate <= "${end}"${projectClause}`
+                const { issues } = await jiraApi.searchIssues(jql, 200)
 
-            const map: WorklogMap = {}
-            await Promise.all(
-                issues.map(async (issue) => {
-                    try {
-                        const { worklogs } = await jiraApi.getIssueWorklogs(issue.key, startMs)
-                        for (const wl of worklogs) {
-                            if (wl.author.accountId !== user.accountId) continue
-                            const dateStr = wl.started.slice(0, 10)
-                            if (dateStr < start || dateStr > end) continue
-                            if (!map[dateStr]) map[dateStr] = []
-                            // Merge same issue on same day
-                            const existing = map[dateStr].find((c) => c.issueKey === issue.key)
-                            if (existing) {
-                                existing.timeSpentSeconds += wl.timeSpentSeconds
-                            } else {
-                                map[dateStr].push({
-                                    issueKey: issue.key,
-                                    issueSummary: issue.fields.summary,
-                                    timeSpentSeconds: wl.timeSpentSeconds,
-                                })
+                const map: WorklogMap = {}
+                await Promise.all(
+                    issues.map(async (issue) => {
+                        try {
+                            const { worklogs } = await jiraApi.getIssueWorklogs(issue.key, startMs)
+                            for (const wl of worklogs) {
+                                if (wl.author.accountId !== user.accountId) continue
+                                const dateStr = wl.started.slice(0, 10)
+                                if (dateStr < start || dateStr > end) continue
+                                if (!map[dateStr]) map[dateStr] = []
+                                // Merge same issue on same day
+                                const existing = map[dateStr].find((c) => c.issueKey === issue.key)
+                                if (existing) {
+                                    existing.timeSpentSeconds += wl.timeSpentSeconds
+                                } else {
+                                    map[dateStr].push({
+                                        issueKey: issue.key,
+                                        issueSummary: issue.fields.summary,
+                                        timeSpentSeconds: wl.timeSpentSeconds,
+                                    })
+                                }
                             }
+                        } catch {
+                            // skip issue if worklog fetch fails
                         }
-                    } catch {
-                        // skip issue if worklog fetch fails
-                    }
-                })
-            )
-            setWorklogMap(map)
-        } catch (e: any) {
-            setError(e.message ?? "Chyba při načítání worklogů")
-        } finally {
-            setLoading(false)
-        }
-    }, [selectedProject])
+                    })
+                )
+                setWorklogMap(map)
+            } catch (e: any) {
+                setError(e.message ?? "Chyba při načítání worklogů")
+            } finally {
+                setLoading(false)
+            }
+        },
+        [selectedProject]
+    )
 
     const handleUserSearch = (q: string) => {
         setUserSearch(q)
         if (userSearchRef.current) clearTimeout(userSearchRef.current)
-        if (!q.trim()) { setUserResults([]); return }
+        if (!q.trim()) {
+            setUserResults([])
+            return
+        }
         userSearchRef.current = setTimeout(async () => {
             try {
                 const users = await jiraApi.searchUsers(q)
@@ -388,7 +444,10 @@ export function WorkLogView({ prefs, selectedProject }: Props) {
             const idx = existing.findIndex((c) => c.issueKey === cell.issueKey)
             if (idx >= 0) {
                 const updated = [...existing]
-                updated[idx] = { ...updated[idx], timeSpentSeconds: updated[idx].timeSpentSeconds + cell.timeSpentSeconds }
+                updated[idx] = {
+                    ...updated[idx],
+                    timeSpentSeconds: updated[idx].timeSpentSeconds + cell.timeSpentSeconds,
+                }
                 return { ...prev, [key]: updated }
             }
             return { ...prev, [key]: [...existing, cell] }
@@ -424,13 +483,19 @@ export function WorkLogView({ prefs, selectedProject }: Props) {
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-3 border-b border-gray-800/60 shrink-0">
                 <div className="flex items-center gap-3">
-                    <button onClick={prevMonth} className="p-1.5 rounded hover:bg-gray-800 text-gray-400 hover:text-gray-200 transition-colors">
+                    <button
+                        onClick={prevMonth}
+                        className="p-1.5 rounded hover:bg-gray-800 text-gray-400 hover:text-gray-200 transition-colors"
+                    >
                         <ChevronLeft className="w-4 h-4" />
                     </button>
                     <h1 className="text-base font-semibold text-gray-100 min-w-[160px] text-center">
                         {MONTHS_CZ[currentMonth.getMonth()]} {currentMonth.getFullYear()}
                     </h1>
-                    <button onClick={nextMonth} className="p-1.5 rounded hover:bg-gray-800 text-gray-400 hover:text-gray-200 transition-colors">
+                    <button
+                        onClick={nextMonth}
+                        className="p-1.5 rounded hover:bg-gray-800 text-gray-400 hover:text-gray-200 transition-colors"
+                    >
                         <ChevronRight className="w-4 h-4" />
                     </button>
                     {loading && <Loader2 className="w-4 h-4 text-gray-500 animate-spin ml-1" />}
@@ -497,7 +562,9 @@ export function WorkLogView({ prefs, selectedProject }: Props) {
                                     </button>
                                 ))}
                                 {userSearch && userResults.length === 0 && (
-                                    <p className="text-xs text-gray-500 px-3 py-3 text-center">Žádní uživatelé nenalezeni</p>
+                                    <p className="text-xs text-gray-500 px-3 py-3 text-center">
+                                        Žádní uživatelé nenalezeni
+                                    </p>
                                 )}
                             </div>
                         </div>
@@ -520,10 +587,7 @@ export function WorkLogView({ prefs, selectedProject }: Props) {
                 </div>
 
                 {/* Weeks grid */}
-                <div
-                    className="flex-1 grid gap-px"
-                    style={{ gridTemplateRows: `repeat(${weeks.length}, 1fr)` }}
-                >
+                <div className="flex-1 grid gap-px" style={{ gridTemplateRows: `repeat(${weeks.length}, 1fr)` }}>
                     {weeks.map((week, wi) => (
                         <div key={wi} className="grid grid-cols-7 gap-px">
                             {week.map((day, di) => {
@@ -559,7 +623,9 @@ export function WorkLogView({ prefs, selectedProject }: Props) {
                                                 {day.getDate()}
                                             </span>
                                             {totalSec > 0 && (
-                                                <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${badgeColor}`}>
+                                                <span
+                                                    className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${badgeColor}`}
+                                                >
                                                     {formatSeconds(totalSec)}
                                                 </span>
                                             )}
@@ -573,8 +639,12 @@ export function WorkLogView({ prefs, selectedProject }: Props) {
                                                     className="flex items-center gap-1 min-w-0"
                                                     title={`${c.issueKey} — ${c.issueSummary} (${formatSeconds(c.timeSpentSeconds)})`}
                                                 >
-                                                    <span className="text-[10px] font-mono text-blue-400 shrink-0">{c.issueKey}</span>
-                                                    <span className="text-[10px] text-gray-500 truncate">{c.issueSummary}</span>
+                                                    <span className="text-[10px] font-mono text-blue-400 shrink-0">
+                                                        {c.issueKey}
+                                                    </span>
+                                                    <span className="text-[10px] text-gray-500 truncate">
+                                                        {c.issueSummary}
+                                                    </span>
                                                 </div>
                                             ))}
                                         </div>
@@ -603,9 +673,7 @@ export function WorkLogView({ prefs, selectedProject }: Props) {
             )}
 
             {/* Close user dropdown on outside click */}
-            {userDropdownOpen && (
-                <div className="fixed inset-0 z-30" onClick={() => setUserDropdownOpen(false)} />
-            )}
+            {userDropdownOpen && <div className="fixed inset-0 z-30" onClick={() => setUserDropdownOpen(false)} />}
         </div>
     )
 }

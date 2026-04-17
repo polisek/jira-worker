@@ -119,7 +119,7 @@ export function FilterModal({ selectedProject, initialValues, onApply, onClose }
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={onClose}>
             <div
-                className="bg-gray-900 border border-gray-700 rounded-xl shadow-2xl w-[480px] max-h-[90vh] flex flex-col"
+                className="modal-panel rounded-xl shadow-2xl w-[480px] max-h-[90vh] flex flex-col"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
