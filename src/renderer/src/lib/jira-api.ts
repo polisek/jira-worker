@@ -18,8 +18,11 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     return result
 }
 // Agile API (jiný base path)
-async function agileRequest<T>(path: string): Promise<T> {
-    return window.api.jiraRequest({ method: "GET", path: `__agile__${path}` }) as Promise<T>
+async function agileRequest<T>(path: string, method = "GET", body?: unknown): Promise<T> {
+    console.log("[AGILE API]", method, path, body)
+    const result = (await window.api.jiraRequest({ method, path: `__agile__${path}`, body })) as T
+    console.log("[AGILE API response]", path, result)
+    return result
 }
 
 export const jiraApi = {
@@ -183,5 +186,19 @@ export const jiraApi = {
 
     getProjectStatuses(projectKey: string): Promise<{ id: string; name: string; statuses: JiraStatus[] }[]> {
         return request("GET", `/project/${projectKey}/statuses`)
+    },
+
+    /**
+     * Rank one issue before another using Jira Agile API.
+     * Works for Epics, Stories, Tasks — anything on an Agile board.
+     * @param issueKey  the issue to move
+     * @param beforeKey move it BEFORE this issue (pass null to rank AFTER afterKey)
+     * @param afterKey  move it AFTER this issue (used when beforeKey is null)
+     */
+    rankIssue(issueKey: string, beforeKey: string | null, afterKey: string | null): Promise<void> {
+        const body: Record<string, unknown> = { issues: [issueKey] }
+        if (beforeKey) body.rankBeforeIssue = beforeKey
+        else if (afterKey) body.rankAfterIssue = afterKey
+        return agileRequest<void>(`/issue/rank`, "PUT", body)
     },
 }
