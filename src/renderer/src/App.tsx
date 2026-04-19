@@ -12,6 +12,7 @@ import { TimeTrackingView } from "./components/TimeTrackingView"
 import { WorkLogView } from "./components/WorkLogView"
 import { ActivityView } from "./components/ActivityView"
 import { TreeView } from "./components/TreeView"
+import { GraphView } from "./components/GraphView"
 import type { JiraSettings, JiraIssue, JiraProject, ViewMode, AppPrefs } from "./types/jira"
 import { DEFAULT_PREFS as DEFAULTS } from "./types/jira"
 
@@ -64,6 +65,12 @@ export default function App() {
 
     const handleSavePrefs = (p: AppPrefs) => {
         setPrefs(p)
+    }
+
+    const handlePrefsChange = (partial: Partial<AppPrefs>) => {
+        const updated = { ...prefs, ...partial }
+        setPrefs(updated)
+        window.api.setPrefs(updated)
     }
 
     const handleSaveHiddenProjects = (keys: string[]) => {
@@ -186,6 +193,13 @@ export default function App() {
                             searchQuery={searchQuery}
                             onSelectIssue={setSelectedIssue}
                             prefs={prefs}
+                        />
+                    ) : view === "graph" ? (
+                        <GraphView
+                            selectedProject={selectedProject}
+                            prefs={prefs}
+                            onPrefsChange={handlePrefsChange}
+                            onIssueSelect={setSelectedIssue}
                         />
                     ) : (
                         <ListView

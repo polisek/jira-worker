@@ -1,5 +1,7 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react"
-import { RefreshCw, AlertCircle, ChevronDown, Plus, GripVertical } from "lucide-react"
+import { RefreshCw, ChevronDown, Plus, GripVertical } from "lucide-react"
+import { ErrorMessage } from "./ErrorMessage"
+import { statusDotClass } from "./IssueBadges"
 import { useIssues } from "../hooks/useIssues"
 import { IssueCard } from "./IssueCard"
 import { CreateIssueModal } from "./CreateIssueModal"
@@ -22,11 +24,6 @@ const CATEGORY_ORDER: Record<string, number> = {
     done: 2,
 }
 
-const CATEGORY_DOT: Record<string, string> = {
-    new: "bg-gray-400",
-    indeterminate: "bg-blue-500",
-    done: "bg-green-500",
-}
 
 const CATEGORY_RING: Record<string, string> = {
     new: "ring-gray-500/40",
@@ -375,12 +372,7 @@ export function BoardView({ selectedProject, projects, filter, searchQuery, onSe
                 />
             )}
 
-            {error && (
-                <div className="mx-4 mt-3 p-3 bg-red-500/10 border border-red-500/30 rounded-lg flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
-                    <p className="text-red-400 text-sm">{error}</p>
-                </div>
-            )}
+            {error && <ErrorMessage message={error} />}
 
             {/* Board */}
             <div className="flex-1 flex gap-3 p-4 overflow-x-auto overflow-y-hidden">
@@ -425,7 +417,7 @@ export function BoardView({ selectedProject, projects, filter, searchQuery, onSe
                                 >
                                     <GripVertical className="w-3.5 h-3.5 text-gray-700 shrink-0" />
                                     <div
-                                        className={`w-2 h-2 rounded-full shrink-0 ${CATEGORY_DOT[col.categoryKey] ?? "bg-gray-400"}`}
+                                        className={`w-2 h-2 rounded-full shrink-0 ${statusDotClass(col.categoryKey)}`}
                                     />
                                     <span className="text-sm font-semibold text-gray-300 truncate" title={col.name}>
                                         {col.name}

@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { ChevronRight, ChevronDown, Plus, Loader2, AlertCircle, RefreshCw, GripVertical } from "lucide-react"
+import { ErrorMessage } from "./ErrorMessage"
+import { StatusBadge } from "./IssueBadges"
 import { jiraApi } from "../lib/jira-api"
 import { CreateIssueModal } from "./CreateIssueModal"
 import type { JiraIssue, JiraProject, AppPrefs } from "../types/jira"
@@ -20,7 +22,7 @@ type NodeState = {
 
 type CreateCtx = {
     parentIssue: JiraIssue | null // null = create Epic at root
-    createTypeName: string        // "Epic" | "Task" | "Subtask"
+    createTypeName: string // "Epic" | "Task" | "Subtask"
 } | null
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -44,29 +46,12 @@ function isSubtaskType(typeName: string, level = 0) {
     return n === "subtask" || n === "sub-task"
 }
 
-// ── Status badge ──────────────────────────────────────────────────────────────
-
-function StatusBadge({ status }: { status: JiraIssue["fields"]["status"] }) {
-    const cat = status.statusCategory.key
-    const cls =
-        cat === "done"
-            ? "bg-green-500/15 text-green-300 border-green-500/30"
-            : cat === "indeterminate"
-              ? "bg-blue-500/15 text-blue-300 border-blue-500/30"
-              : "bg-gray-500/15 text-gray-400 border-gray-500/30"
-    return (
-        <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs border whitespace-nowrap ${cls}`}>
-            {status.name}
-        </span>
-    )
-}
-
 // ── Single tree node ──────────────────────────────────────────────────────────
 
 interface TreeNodeProps {
     issue: JiraIssue
     level: number
-    parentKey: string | null  // null = root epic list
+    parentKey: string | null // null = root epic list
     nodeStates: Map<string, NodeState>
     expanded: Set<string>
     dragOverKey: string | null
@@ -79,7 +64,21 @@ interface TreeNodeProps {
     onDragEnd: () => void
 }
 
-function TreeNode({ issue, level, parentKey, nodeStates, expanded, dragOverKey, onToggle, onSelectIssue, onAdd, onDragStart, onDragOver, onDrop, onDragEnd }: TreeNodeProps) {
+function TreeNode({
+    issue,
+    level,
+    parentKey,
+    nodeStates,
+    expanded,
+    dragOverKey,
+    onToggle,
+    onSelectIssue,
+    onAdd,
+    onDragStart,
+    onDragOver,
+    onDrop,
+    onDragEnd,
+}: TreeNodeProps) {
     const typeName = issue.fields.issuetype.name
     const isLeaf = isSubtaskType(typeName, level)
     const style = issueTypeStyle(typeName, level)
@@ -103,9 +102,20 @@ function TreeNode({ issue, level, parentKey, nodeStates, expanded, dragOverKey, 
             {/* ── Row ─────────────────────────────────────────────────────── */}
             <div
                 draggable
-                onDragStart={(e) => { e.stopPropagation(); onDragStart(issue.key, parentKey) }}
-                onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); onDragOver(issue.key) }}
-                onDrop={(e) => { e.preventDefault(); e.stopPropagation(); onDrop(issue.key) }}
+                onDragStart={(e) => {
+                    e.stopPropagation()
+                    onDragStart(issue.key, parentKey)
+                }}
+                onDragOver={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    onDragOver(issue.key)
+                }}
+                onDrop={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    onDrop(issue.key)
+                }}
                 onDragEnd={onDragEnd}
                 className="group flex items-center gap-1.5 py-[5px] pr-1 rounded-md transition-colors hover:bg-[var(--c-item-h)]"
                 style={{
@@ -176,7 +186,6 @@ function TreeNode({ issue, level, parentKey, nodeStates, expanded, dragOverKey, 
                         )}
                     </div>
                 </div>
-
             </div>
 
             {/* ── Children ──────────────────────────────────────────────────── */}
@@ -223,19 +232,20 @@ function TreeNode({ issue, level, parentKey, nodeStates, expanded, dragOverKey, 
                         ))}
 
                     {/* Add-child button — last item in branch */}
-                    {!nodeState.loading && (() => {
-                        const childTypeName = typeName === "epic" ? "Task" : "Subtask"
-                        return (
-                            <button
-                                onClick={() => onAdd(issue, childTypeName)}
-                                className="flex items-center justify-center gap-1.5 py-1.5 my-0.5 text-xs rounded-md w-full transition-colors hover:opacity-80"
-                                style={{ color: "#60a5fa", background: "rgba(96,165,250,0.08)" }}
-                            >
-                                <Plus className="w-3 h-3" />
-                                {`Nový ${childTypeName} do „${issue.fields.summary}"`}
-                            </button>
-                        )
-                    })()}
+                    {!nodeState.loading &&
+                        (() => {
+                            const childTypeName = typeName === "epic" ? "Task" : "Subtask"
+                            return (
+                                <button
+                                    onClick={() => onAdd(issue, childTypeName)}
+                                    className="flex items-center justify-center gap-1.5 py-1.5 my-0.5 text-xs rounded-md w-full transition-colors hover:opacity-80"
+                                    style={{ color: "#60a5fa", background: "rgba(96,165,250,0.08)" }}
+                                >
+                                    <Plus className="w-3 h-3" />
+                                    {`Nový ${childTypeName} do „${issue.fields.summary}"`}
+                                </button>
+                            )
+                        })()}
                 </div>
             )}
         </div>
@@ -245,7 +255,6 @@ function TreeNode({ issue, level, parentKey, nodeStates, expanded, dragOverKey, 
 // ── Main TreeView ─────────────────────────────────────────────────────────────
 
 export function TreeView({ selectedProject, projects, searchQuery, onSelectIssue, prefs }: Props) {
-
     const [epics, setEpics] = useState<JiraIssue[]>([])
     const [epicsLoading, setEpicsLoading] = useState(false)
     const [epicsError, setEpicsError] = useState<string | null>(null)
@@ -272,9 +281,14 @@ export function TreeView({ selectedProject, projects, searchQuery, onSelectIssue
 
     const handleDrop = useCallback((toKey: string) => {
         const drag = draggingRef.current
-        if (!drag || drag.key === toKey) { setDragOverKey(null); return }
+        if (!drag || drag.key === toKey) {
+            setDragOverKey(null)
+            return
+        }
 
-        const reorder = (list: JiraIssue[]): { next: JiraIssue[]; beforeKey: string | null; afterKey: string | null } => {
+        const reorder = (
+            list: JiraIssue[]
+        ): { next: JiraIssue[]; beforeKey: string | null; afterKey: string | null } => {
             const fromIdx = list.findIndex((i) => i.key === drag.key)
             const toIdx = list.findIndex((i) => i.key === toKey)
             if (fromIdx === -1 || toIdx === -1) return { next: list, beforeKey: null, afterKey: null }
@@ -324,32 +338,37 @@ export function TreeView({ selectedProject, projects, searchQuery, onSelectIssue
 
     // ── Load root EPICs ───────────────────────────────────────────────────────
 
-    const loadEpics = useCallback(async (resetTree = true) => {
-        setEpicsLoading(true)
-        setEpicsError(null)
-        // Reset expanded/children only when the query context changes (project, search)
-        // not when just refreshing after creation
-        if (resetTree) {
-            setExpanded(new Set())
-            setNodeStates(new Map())
-        }
+    const loadEpics = useCallback(
+        async (resetTree = true) => {
+            setEpicsLoading(true)
+            setEpicsError(null)
+            // Reset expanded/children only when the query context changes (project, search)
+            // not when just refreshing after creation
+            if (resetTree) {
+                setExpanded(new Set())
+                setNodeStates(new Map())
+            }
 
-        try {
-            const parts: string[] = ["issuetype = Epic"]
-            if (selectedProject) parts.push(`project = "${selectedProject.key}"`)
-            if (searchQuery.trim()) parts.push(`summary ~ "${searchQuery.trim()}"`)
-            const jql = parts.join(" AND ") + " ORDER BY rank ASC"
-            const result = await jiraApi.searchIssues(jql, prefs.maxResults)
-            setEpics(result.issues)
-        } catch (e: any) {
-            setEpicsError(e.message)
-        } finally {
-            setEpicsLoading(false)
-        }
-    }, [selectedProject, searchQuery, prefs.maxResults])
+            try {
+                const parts: string[] = ["issuetype = Epic"]
+                if (selectedProject) parts.push(`project = "${selectedProject.key}"`)
+                if (searchQuery.trim()) parts.push(`summary ~ "${searchQuery.trim()}"`)
+                const jql = parts.join(" AND ") + " ORDER BY rank ASC"
+                const result = await jiraApi.searchIssues(jql, prefs.maxResults)
+                setEpics(result.issues)
+            } catch (e: any) {
+                setEpicsError(e.message)
+            } finally {
+                setEpicsLoading(false)
+            }
+        },
+        [selectedProject, searchQuery, prefs.maxResults]
+    )
 
     // Keep ref in sync so drag handlers can call loadEpics without stale closure
-    useEffect(() => { loadEpicsRef.current = loadEpics }, [loadEpics])
+    useEffect(() => {
+        loadEpicsRef.current = loadEpics
+    }, [loadEpics])
 
     useEffect(() => {
         const timer = setTimeout(loadEpics, searchQuery ? 400 : 0)
@@ -358,42 +377,39 @@ export function TreeView({ selectedProject, projects, searchQuery, onSelectIssue
 
     // ── Lazy-load children when a node is expanded ────────────────────────────
 
-    const loadChildren = useCallback(
-        async (issue: JiraIssue) => {
-            const key = issue.key
-            const typeName = issue.fields.issuetype.name.toLowerCase()
+    const loadChildren = useCallback(async (issue: JiraIssue) => {
+        const key = issue.key
+        const typeName = issue.fields.issuetype.name.toLowerCase()
+
+        setNodeStates((prev) => {
+            const next = new Map(prev)
+            next.set(key, { children: prev.get(key)?.children ?? null, loading: true, error: null })
+            return next
+        })
+
+        try {
+            const jql =
+                typeName === "epic"
+                    ? // Epic children: support both classic (Epic Link) and next-gen (parent)
+                      `(parent = "${key}" OR "Epic Link" = "${key}") ORDER BY rank ASC`
+                    : // Subtasks (any non-epic non-leaf)
+                      `parent = "${key}" ORDER BY rank ASC`
+
+            const result = await jiraApi.searchIssues(jql, 100)
 
             setNodeStates((prev) => {
                 const next = new Map(prev)
-                next.set(key, { children: prev.get(key)?.children ?? null, loading: true, error: null })
+                next.set(key, { children: result.issues, loading: false, error: null })
                 return next
             })
-
-            try {
-                const jql =
-                    typeName === "epic"
-                        ? // Epic children: support both classic (Epic Link) and next-gen (parent)
-                          `(parent = "${key}" OR "Epic Link" = "${key}") ORDER BY rank ASC`
-                        : // Subtasks (any non-epic non-leaf)
-                          `parent = "${key}" ORDER BY rank ASC`
-
-                const result = await jiraApi.searchIssues(jql, 100)
-
-                setNodeStates((prev) => {
-                    const next = new Map(prev)
-                    next.set(key, { children: result.issues, loading: false, error: null })
-                    return next
-                })
-            } catch (e: any) {
-                setNodeStates((prev) => {
-                    const next = new Map(prev)
-                    next.set(key, { children: [], loading: false, error: e.message })
-                    return next
-                })
-            }
-        },
-        []
-    )
+        } catch (e: any) {
+            setNodeStates((prev) => {
+                const next = new Map(prev)
+                next.set(key, { children: [], loading: false, error: e.message })
+                return next
+            })
+        }
+    }, [])
 
     // ── Toggle expand / collapse ──────────────────────────────────────────────
 
@@ -519,10 +535,10 @@ export function TreeView({ selectedProject, projects, searchQuery, onSelectIssue
                 )}
 
                 {!epicsLoading && epicsError && (
-                    <div className="flex items-center gap-2 m-2 p-3 rounded-lg text-sm text-red-400 bg-red-500/10 border border-red-500/30">
-                        <AlertCircle className="w-4 h-4 shrink-0" />
-                        {epicsError}
-                    </div>
+                    <ErrorMessage
+                        message={epicsError}
+                        className="m-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg"
+                    />
                 )}
 
                 {!epicsLoading && !epicsError && epics.length === 0 && (
@@ -547,7 +563,9 @@ export function TreeView({ selectedProject, projects, searchQuery, onSelectIssue
                             dragOverKey={dragOverKey}
                             onToggle={handleToggle}
                             onSelectIssue={onSelectIssue}
-                            onAdd={(issue, childTypeName) => setCreateCtx({ parentIssue: issue, createTypeName: childTypeName })}
+                            onAdd={(issue, childTypeName) =>
+                                setCreateCtx({ parentIssue: issue, createTypeName: childTypeName })
+                            }
                             onDragStart={handleDragStart}
                             onDragOver={handleDragOver}
                             onDrop={handleDrop}

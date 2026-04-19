@@ -352,7 +352,11 @@ export function SettingsView({ onSaveJira, onSavePrefs, initialJira, prefs }: Pr
                         ) : (
                             <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
                         )}
-                        <p className={`text-sm ${testResult.ok ? "text-green-300" : "text-red-300"}`}>
+                        <p
+                            className={`text-sm flex-1 ${testResult.ok ? "text-green-300" : "text-red-300 cursor-pointer"}`}
+                            onClick={!testResult.ok ? () => navigator.clipboard.writeText(testResult.message) : undefined}
+                            title={!testResult.ok ? "Klikni pro zkopírování" : undefined}
+                        >
                             {testResult.message}
                         </p>
                     </div>

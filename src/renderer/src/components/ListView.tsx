@@ -1,5 +1,7 @@
 import { useState } from "react"
 import { RefreshCw, AlertCircle, Plus, SlidersHorizontal } from "lucide-react"
+import { ErrorMessage } from "./ErrorMessage"
+import { StatusBadge, PriorityDot } from "./IssueBadges"
 import { useIssues } from "../hooks/useIssues"
 import { formatDateShort } from "../lib/adf-to-text"
 import { CreateIssueModal } from "./CreateIssueModal"
@@ -16,19 +18,6 @@ interface Props {
     prefs: AppPrefs
 }
 
-const statusColors: Record<string, string> = {
-    new: "badge-gray",
-    indeterminate: "badge-blue",
-    done: "badge-green",
-}
-
-const priorityDot: Record<string, string> = {
-    Highest: "bg-red-500",
-    High: "bg-orange-500",
-    Medium: "bg-yellow-500",
-    Low: "bg-blue-500",
-    Lowest: "bg-gray-500",
-}
 
 export function ListView({ selectedProject, projects, filter, searchQuery, onSelectIssue, prefs }: Props) {
     const [advancedFilter, setAdvancedFilter] = useState<AdvancedFilter | undefined>(undefined)
@@ -101,12 +90,7 @@ export function ListView({ selectedProject, projects, filter, searchQuery, onSel
                 />
             )}
 
-            {error && (
-                <div className="mx-4 mt-3 p-3 bg-red-500/10 border border-red-500/30 rounded-lg flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
-                    <p className="text-red-400 text-sm">{error}</p>
-                </div>
-            )}
+            {error && <ErrorMessage message={error} />}
 
             <div className="flex-1 overflow-y-auto">
                 <table className="w-full text-sm">
@@ -151,17 +135,11 @@ export function ListView({ selectedProject, projects, filter, searchQuery, onSel
                                     <span className="text-gray-200 line-clamp-1">{issue.fields.summary}</span>
                                 </td>
                                 <td className="px-4 py-2.5">
-                                    <span
-                                        className={`badge ${statusColors[issue.fields.status.statusCategory.key] ?? "badge-gray"}`}
-                                    >
-                                        {issue.fields.status.name}
-                                    </span>
+                                    <StatusBadge status={issue.fields.status} />
                                 </td>
                                 <td className="px-4 py-2.5">
                                     <div className="flex items-center gap-1.5">
-                                        <div
-                                            className={`w-2 h-2 rounded-full shrink-0 ${priorityDot[issue.fields.priority?.name] ?? "bg-gray-500"}`}
-                                        />
+                                        <PriorityDot priority={issue.fields.priority} />
                                         <span className="text-gray-400 text-xs">{issue.fields.priority?.name}</span>
                                     </div>
                                 </td>

@@ -14,6 +14,7 @@ import {
     Star,
     Check,
     GitBranch,
+    Network,
 } from "lucide-react"
 import { jiraApi } from "../lib/jira-api"
 import { RecentAssignments } from "./RecentAssignments"
@@ -126,6 +127,9 @@ export function Sidebar({
                 <button onClick={() => setView("tree")} className={`sidebar-item ${view === "tree" ? "active" : ""}`}>
                     <GitBranch className="w-4 h-4" /> Strom
                 </button>
+                <button onClick={() => setView("graph")} className={`sidebar-item ${view === "graph" ? "active" : ""}`}>
+                    <Network className="w-4 h-4" /> Graf
+                </button>
                 <button onClick={() => setView("time")} className={`sidebar-item ${view === "time" ? "active" : ""}`}>
                     <Timer className="w-4 h-4" /> Měření času
                 </button>
@@ -141,6 +145,7 @@ export function Sidebar({
                 >
                     <Activity className="w-4 h-4" /> Aktivita
                 </button>
+
                 <button
                     onClick={() => setView("settings")}
                     className={`sidebar-item ${view === "settings" ? "active" : ""}`}
@@ -204,7 +209,15 @@ export function Sidebar({
                     </div>
                 </div>
 
-                {projectsError && <p className="text-red-400 text-xs px-2 py-1">{projectsError}</p>}
+                {projectsError && (
+                    <p
+                        className="text-red-400 text-xs px-2 py-1 cursor-pointer"
+                        onClick={() => navigator.clipboard.writeText(projectsError)}
+                        title="Klikni pro zkopírování"
+                    >
+                        {projectsError}
+                    </p>
+                )}
 
                 {!editMode && (
                     <button

@@ -1,6 +1,7 @@
 import type { JiraIssue } from '../types/jira'
 import { formatDateShort } from '../lib/adf-to-text'
 import { Calendar, MessageSquare, GripVertical } from 'lucide-react'
+import { PriorityDot } from './IssueBadges'
 
 interface Props {
   issue: JiraIssue
@@ -12,13 +13,6 @@ interface Props {
   onDragEnd?: (e: React.DragEvent) => void
 }
 
-const priorityDot: Record<string, string> = {
-  Highest: 'bg-red-500',
-  High: 'bg-orange-500',
-  Medium: 'bg-yellow-500',
-  Low: 'bg-blue-500',
-  Lowest: 'bg-gray-500'
-}
 
 export function IssueCard({ issue, onClick, dragging, transitioning, onDragStart, onDragEnd }: Props) {
   const { fields } = issue
@@ -59,7 +53,7 @@ export function IssueCard({ issue, onClick, dragging, transitioning, onDragStart
           {storyPoints != null && (
             <span className="badge badge-blue">{storyPoints} SP</span>
           )}
-          <span className={`w-2 h-2 rounded-full ${priorityDot[fields.priority?.name] ?? 'bg-gray-500'}`} title={fields.priority?.name} />
+          <PriorityDot priority={fields.priority} title={fields.priority?.name} />
         </div>
       </div>
 

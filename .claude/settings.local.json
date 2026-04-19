@@ -5,7 +5,10 @@
       "Bash(npm view:*)",
       "Bash(node:*)",
       "Bash(npx tsc *)",
-      "Bash(find /Users/janstepanek/Project/Node.js/jira-worker/src -type f \\\\\\( -name \"*.ts\" -o -name \"*.tsx\" \\\\\\) -exec grep -l \"AppPrefs\\\\|interface.*Prefs\" {} \\\\;)"
+      "Bash(find /Users/janstepanek/Project/Node.js/jira-worker/src -type f \\\\\\( -name \"*.ts\" -o -name \"*.tsx\" \\\\\\) -exec grep -l \"AppPrefs\\\\|interface.*Prefs\" {} \\\\;)",
+      "Bash(yarn add *)",
+      "Bash(yarn tsc *)",
+      "WebSearch"
     ]
   }
 }

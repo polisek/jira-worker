@@ -285,7 +285,11 @@ export function ActivityView({ selectedProject, onSelectIssue }: Props) {
                         </button>
                     )}
                     {error && (
-                        <span className="text-xs text-red-400 flex items-center gap-1">
+                        <span
+                            className="text-xs text-red-400 flex items-center gap-1 cursor-pointer"
+                            onClick={() => navigator.clipboard.writeText(error)}
+                            title="Klikni pro zkopírování"
+                        >
                             <AlertCircle className="w-3.5 h-3.5" /> {error}
                         </span>
                     )}
