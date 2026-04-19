@@ -188,6 +188,49 @@ export const jiraApi = {
         return request("GET", `/project/${projectKey}/statuses`)
     },
 
+    deleteIssueLink(linkId: string): Promise<void> {
+        return request("DELETE", `/issueLink/${linkId}`)
+    },
+
+    async createIssueLink(outwardKey: string, inwardKey: string, typeName: "Blocks" | "Relates"): Promise<string> {
+        await request("POST", "/issueLink", {
+            type: { name: typeName },
+            outwardIssue: { key: outwardKey },
+            inwardIssue: { key: inwardKey },
+        })
+        const issue = await request<JiraIssue>("GET", `/issue/${outwardKey}?fields=issuelinks`)
+        return issue.fields.issuelinks?.find(l => l.outwardIssue?.key === inwardKey)?.id ?? ""
+    },
+
+    getEpicIssues: async (epicKey: string, projectKey?: string): Promise<JiraIssue[]> => {
+        const jql = projectKey
+            ? `("Epic Link" = ${epicKey} OR parentEpic = ${epicKey} OR parent = ${epicKey}) AND project = "${projectKey}" ORDER BY created ASC`
+            : `("Epic Link" = ${epicKey} OR parentEpic = ${epicKey} OR parent = ${epicKey}) ORDER BY created ASC`
+
+        const fields = ["summary", "status", "priority", "assignee", "issuetype", "issuelinks", "customfield_10014", "customfield_10016", "customfield_10020", "timeoriginalestimate", "parent", "subtasks"]
+
+        const [{ issues }, epic] = await Promise.all([
+            request<{ issues: JiraIssue[] }>("POST", "/search/jql", { jql, maxResults: 100, fields }),
+            request<JiraIssue>("GET", `/issue/${epicKey}?fields=summary,status,priority,assignee,issuetype,issuelinks,subtasks,customfield_10020,timeoriginalestimate`),
+        ])
+
+        const allIssues = [epic, ...issues]
+        const fetchedKeys = new Set(allIssues.map((i) => i.key))
+        const missingSubtaskKeys = allIssues
+            .flatMap((i) => i.fields.subtasks?.map((s) => s.key) ?? [])
+            .filter((k) => !fetchedKeys.has(k))
+
+        if (missingSubtaskKeys.length === 0) return allIssues
+
+        const { issues: subtasks } = await request<{ issues: JiraIssue[] }>("POST", "/search/jql", {
+            jql: `key in (${missingSubtaskKeys.join(", ")})`,
+            maxResults: 200,
+            fields,
+        })
+
+        return [...allIssues, ...subtasks]
+    },
+
     /**
      * Rank one issue before another using Jira Agile API.
      * Works for Epics, Stories, Tasks — anything on an Agile board.
@@ -200,5 +243,27 @@ export const jiraApi = {
         if (beforeKey) body.rankBeforeIssue = beforeKey
         else if (afterKey) body.rankAfterIssue = afterKey
         return agileRequest<void>(`/issue/rank`, "PUT", body)
+    },
+
+    moveToSprint(sprintId: number, issueKey: string): Promise<void> {
+        return agileRequest<void>(`/sprint/${sprintId}/issue`, "POST", { issues: [issueKey] })
+    },
+
+    moveToBacklog(issueKey: string): Promise<void> {
+        return agileRequest<void>(`/backlog/issue`, "POST", { issues: [issueKey] })
+    },
+
+    // Graph layout persistovaný přímo v Jira Issue Properties na epicu
+    getGraphLayout(epicKey: string): Promise<{ positions: Record<string, { x: number; y: number }>; updatedAt: number } | null> {
+        return request<{ key: string; value: { positions: Record<string, { x: number; y: number }>; updatedAt: number } }>(
+            "GET", `/issue/${epicKey}/properties/graph-layout`
+        ).then(r => r.value ?? null).catch(() => null)
+    },
+
+    saveGraphLayout(epicKey: string, positions: Record<string, { x: number; y: number }>): Promise<void> {
+        return request("PUT", `/issue/${epicKey}/properties/graph-layout`, {
+            positions,
+            updatedAt: Date.now(),
+        })
     },
 }

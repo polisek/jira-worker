@@ -210,12 +210,56 @@
     }
 
     .badge-blue {
-        @apply bg-blue-500/20 text-blue-400;
+        @apply bg-blue-500/20;
+        color: #2563eb;
+    }
+    :root:not(.light) .badge-blue {
+        color: #60a5fa;
     }
 
     .badge-green {
         @apply bg-green-500/20;
         color: #16a34a;
+    }
+    :root:not(.light) .badge-green {
+        color: #4ade80;
+    }
+
+    /* Priority badges */
+    .badge-priority-high {
+        @apply bg-red-500/15;
+        color: #dc2626;
+    }
+    :root:not(.light) .badge-priority-high {
+        color: #f87171;
+    }
+
+    .badge-priority-medium {
+        @apply bg-amber-500/15;
+        color: #b45309;
+    }
+    :root:not(.light) .badge-priority-medium {
+        color: #fbbf24;
+    }
+
+    .badge-priority-low {
+        @apply bg-blue-500/15;
+        color: #2563eb;
+    }
+    :root:not(.light) .badge-priority-low {
+        color: #60a5fa;
+    }
+
+    .badge-epic {
+        @apply text-xs font-semibold px-2 py-0.5 rounded;
+        background: #f3e8ff;
+        color: #7e22ce;
+        border: 1px solid #d8b4fe;
+    }
+    :root:not(.light) .badge-epic {
+        background: rgba(88, 28, 135, 0.25);
+        color: #c084fc;
+        border-color: rgba(139, 92, 246, 0.35);
     }
 
     /* Buttons */
@@ -390,6 +434,45 @@
     .table-head {
         background: var(--c-bg-sidebar);
         border-bottom: 1px solid var(--c-border);
+    }
+
+    /* React Flow — dark theme overrides */
+    .react-flow__node {
+        @apply outline-none;
+    }
+
+    .react-flow__handle {
+        @apply opacity-0 transition-opacity;
+    }
+    .react-flow__node:hover .react-flow__handle {
+        @apply opacity-100;
+    }
+
+    .react-flow__controls {
+        @apply shadow-none;
+    }
+    .react-flow__controls-button {
+        border-color: var(--c-border) !important;
+        background: var(--c-bg-titlebar) !important;
+        color: var(--c-text-3) !important;
+    }
+    .react-flow__controls-button:hover {
+        background: var(--c-item-h) !important;
+        color: var(--c-text) !important;
+    }
+
+    .react-flow__minimap {
+        @apply shadow-none;
+        border-color: var(--c-border) !important;
+        background: var(--c-bg-titlebar) !important;
+    }
+
+    .react-flow__edge-path {
+        stroke-opacity: 0.7;
+    }
+
+    .react-flow__attribution {
+        @apply hidden;
     }
 }
 

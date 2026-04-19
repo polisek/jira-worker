@@ -3,6 +3,7 @@ import { X, Send, RefreshCw, ChevronRight, Save } from "lucide-react"
 import { jiraApi } from "../lib/jira-api"
 import { adfToText, formatDate } from "../lib/adf-to-text"
 import { UserPicker } from "./UserPicker"
+import { StatusBadge } from "./IssueBadges"
 import { AdfContent } from "./AdfContent"
 import { TimeTracking } from "./TimeTracking"
 import { LogWorkDialog } from "./LogWorkDialog"
@@ -15,11 +16,6 @@ interface Props {
     onUpdate: (updated: JiraIssue) => void
 }
 
-const statusCategoryClass: Record<string, string> = {
-    new: "badge-gray",
-    indeterminate: "badge-blue",
-    done: "badge-green",
-}
 
 export function TaskDetail({ issue, prefs, onClose, onUpdate }: Props) {
     const [detail, setDetail] = useState<JiraIssue>(issue)
@@ -215,11 +211,7 @@ export function TaskDetail({ issue, prefs, onClose, onUpdate }: Props) {
                         <div className="flex items-center gap-2">
                             <img src={detail.fields.issuetype.iconUrl} alt="" className="w-4 h-4 shrink-0" />
                             <span className="text-xs font-mono text-gray-400">{detail.key}</span>
-                            <span
-                                className={`badge ${statusCategoryClass[detail.fields.status.statusCategory.key] ?? "badge-gray"}`}
-                            >
-                                {detail.fields.status.name}
-                            </span>
+                            <StatusBadge status={detail.fields.status} />
                         </div>
                     </div>
                     <h2 className="text-sm font-semibold text-gray-100 leading-snug">{detail.fields.summary}</h2>
@@ -331,7 +323,7 @@ export function TaskDetail({ issue, prefs, onClose, onUpdate }: Props) {
                 )}
 
                 {/* Čas */}
-                <TimeTracking issue={detail} onLogWork={() => setLogWorkOpen(true)} />
+                <TimeTracking issue={detail} onLogWork={() => setLogWorkOpen(true)} onOriginalEdited={loadDetail} />
 
                 {/* Description */}
                 <div className="px-4 py-3 border-b border-gray-800">
@@ -406,11 +398,7 @@ export function TaskDetail({ issue, prefs, onClose, onUpdate }: Props) {
                                             className="w-4 h-4 rounded-full shrink-0"
                                         />
                                     )}
-                                    <span
-                                        className={`shrink-0 badge text-xs ${statusCategoryClass[s.fields.status.statusCategory.key] ?? "badge-gray"}`}
-                                    >
-                                        {s.fields.status.name}
-                                    </span>
+                                    <StatusBadge status={s.fields.status} className="shrink-0" />
                                 </div>
                             ))}
                         </div>

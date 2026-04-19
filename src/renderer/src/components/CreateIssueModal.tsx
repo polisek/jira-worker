@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { X, Plus, Loader, AlertCircle, CheckCircle } from 'lucide-react'
+import { ErrorMessage } from './ErrorMessage'
 import { jiraApi } from '../lib/jira-api'
 import { UserPicker } from './UserPicker'
 import type { JiraProject, JiraUser, JiraIssueType, JiraSprint, JiraIssue } from '../types/jira'
@@ -378,10 +379,7 @@ export function CreateIssueModal({ projects, defaultProject, onClose, onCreated,
 
           {/* Error / Success */}
           {error && (
-            <div className="flex items-start gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
-              <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
-              <p className="text-red-300 text-sm">{error}</p>
-            </div>
+            <ErrorMessage message={error} className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg" />
           )}
 
           {success && (

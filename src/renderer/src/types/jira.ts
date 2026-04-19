@@ -74,6 +74,18 @@ export interface JiraSprint {
     endDate?: string
 }
 
+export interface JiraIssueLink {
+    id: string
+    type: {
+        id: string
+        name: string
+        inward: string
+        outward: string
+    }
+    inwardIssue?: { key: string; fields: { summary: string; status: JiraStatus } }
+    outwardIssue?: { key: string; fields: { summary: string; status: JiraStatus } }
+}
+
 export interface JiraIssue {
     id: string
     key: string
@@ -105,6 +117,7 @@ export interface JiraIssue {
         customfield_10014?: string // epic link
         customfield_10020?: JiraSprint[] // sprints
         attachment?: JiraAttachment[]
+        issuelinks?: JiraIssueLink[]
     }
 }
 
@@ -114,7 +127,7 @@ export interface JiraTransition {
     to: JiraStatus
 }
 
-export type ViewMode = "board" | "list" | "tree" | "settings" | "time" | "worklog" | "activity"
+export type ViewMode = "board" | "list" | "tree" | "settings" | "time" | "worklog" | "activity" | "graph"
 
 export interface JiraChangelogItem {
     field: string
@@ -149,6 +162,25 @@ export interface TimeEntry {
 }
 export type StatusCategory = "todo" | "inprogress" | "done"
 
+export type IssueLinkType = "blocks" | "is blocked by" | "relates to" | "duplicates" | "is duplicated by" | "clones" | "is cloned by"
+
+export interface GraphEdgeData {
+    linkType: IssueLinkType
+    label: string
+}
+
+export interface GraphNodePosition {
+    x: number
+    y: number
+}
+
+export interface GraphLayout {
+    epicKey: string
+    projectKey: string
+    positions: Record<string, GraphNodePosition>
+    updatedAt: number
+}
+
 export interface AppPrefs {
     doneMaxAgeDays: number // 0 = nezobrazovat, -1 = vše
     defaultFilter: "all" | "mine" | "unassigned"
@@ -160,6 +192,7 @@ export interface AppPrefs {
     dailyWorkHours: number
     theme: "dark" | "light" | "auto"
     hiddenProjectKeys: string[]
+    graphLayouts?: GraphLayout[]
 }
 
 export interface AdvancedFilter {

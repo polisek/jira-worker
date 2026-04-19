@@ -13,6 +13,7 @@
     "dependencies": {
         "@electron-toolkit/preload": "^3.0.0",
         "@electron-toolkit/utils": "^3.0.0",
+        "@xyflow/react": "^12.10.2",
         "electron-store": "^8.2.0",
         "electron-updater": "^6.1.0"
     },
@@ -50,7 +51,13 @@
         },
         "mac": {
             "target": [
-                { "target": "dmg", "arch": ["x64", "arm64"] }
+                {
+                    "target": "dmg",
+                    "arch": [
+                        "x64",
+                        "arm64"
+                    ]
+                }
             ],
             "icon": "resources/icon.icns",
             "category": "public.app-category.productivity",

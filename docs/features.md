@@ -16,7 +16,7 @@ Jira Worker is a frameless Electron desktop application (Windows primary, macOS 
 
 ## Views
 
-Six views routed by `ViewMode` (`"board" | "list" | "settings" | "time" | "worklog" | "activity"`). The active view is stored in `App.tsx` state and persisted as `AppPrefs.defaultView` for Board/List only.
+Seven views routed by `ViewMode` (`"board" | "list" | "settings" | "time" | "worklog" | "activity" | "graph"`). The active view is stored in `App.tsx` state and persisted as `AppPrefs.defaultView` for Board/List only.
 
 ### Board View (`BoardView.tsx`)
 Kanban-style board driven directly from Jira statuses.
@@ -89,6 +89,69 @@ Chronological feed of a user's Jira activity.
 - Relative timestamps ("před 5 min", "před 2 d", etc.) with full absolute on hover
 - Click an activity entry → opens `TaskDetail` for that issue
 - Refresh button; loading spinner; error banner
+
+### Graph View (`GraphView.tsx` + `IssueNode.tsx` + `LinkEdge.tsx`)
+
+Interactive dependency graph for a selected epic. Built on **React Flow** (`@xyflow/react`).
+
+#### Layout
+
+- Toolbar at top: EPIC label, epic selector dropdown, Refresh button, Save layout button, edge-type legend
+- Full-canvas React Flow instance below; `MiniMap` + `Controls` widgets; dot-grid background
+- Empty state prompt when no epic is selected
+
+#### Data loading (`useGraphData` hook)
+
+- Fetches all issues belonging to the selected epic via `jiraApi.getEpicIssues()`:
+  - Parallel: POST `/search/jql` (direct children by Epic Link / parentEpic / parent) + GET `/issue/:epicKey` (the epic itself)
+  - Second phase: any subtasks referenced in `fields.subtasks` that weren't returned by the JQL are fetched in a second POST `/search/jql`
+- Fields fetched: `summary`, `status`, `priority`, `assignee`, `issuetype`, `issuelinks`, `customfield_10014`, `customfield_10016`, `parent`, `subtasks`
+
+#### Nodes (`IssueNode`)
+
+Each issue is a card node showing: issue type icon, key (monospace), status badge, summary (2-line clamp), story points, priority badge, assignee initials.
+
+Handle layout per node type:
+
+| Node type | Handles |
+|---|---|
+| **Epic** | `top` / `left` (target, purple), `right` / `bottom` (source, purple) + invisible `left-src` / `right-tgt` ghosts for RTL programmatic edges |
+| **Task / Subtask** | `top` (target, purple), `bottom` (source, purple), `left-relates` / `left-blocks` (target, blue/red at 33%/67%), `right-relates` / `right-blocks` (source, blue/red at 33%/67%) + invisible RTL ghost handles for all four side handles |
+
+Ghost handles (`connectable={false}`, `opacity: 0`, 1 px) carry the opposite `type` to the visible handle so that programmatic edges with RTL routing always reference a handle with the correct source/target type (React Flow silently drops edges that reference a handle with the wrong type).
+
+#### Edges
+
+Two edge categories:
+
+**Parent-child** (purple, dashed `4 2`, `type: "default"` bezier):
+- Source handle `bottom`, target handle `top`
+- Direction: parent → child (Epic→Task, Task→Subtask) derived from `issue.fields.parent`
+
+**Issue links** (BLOCKS / RELATES, `type: "linkEdge"` custom component):
+- BLOCKS: red (`#f85149`), animated, label "blocks"
+- RELATES: blue (`#58a6ff`), dashed `5 3`, label "relates to"
+- Direction derived from `outwardIssue` / `inwardIssue`; deduped by sorted `sourceKey--destKey` edge ID
+- **Position-based handle routing**: compares node X positions; LTR → `right-*` source / `left-*` target; RTL → `left-*-src` ghost / `right-*-tgt` ghost
+- `LinkEdge` custom component: renders `BaseEdge` + `EdgeLabelRenderer` label pill containing the link type text and an `×` delete button
+
+#### Interactions
+
+| Action | Behaviour |
+|---|---|
+| Click node | Fetches full issue via `getIssue()` and opens `TaskDetail` panel |
+| Drag node | Node position updated in state; 800 ms debounce then auto-saves layout |
+| Save layout button | Saves all current node positions to `AppPrefs.graphLayouts` |
+| Connect `right-blocks` / `left-blocks-src` → task | Creates BLOCKS Jira link; adds optimistic `linkEdge`; fetches `linkId` from refetched issue; enables delete button immediately |
+| Connect `right-relates` / `left-relates-src` → task | Same flow for RELATES link |
+| Connect any handle → empty canvas (Epic) | Opens `CreateIssueModal` with `defaultEpic` pre-filled, `defaultIssueTypeName="Task"` |
+| Drag `bottom` handle → empty canvas (Task/Subtask) | Opens `CreateIssueModal` with `defaultParentKey` pre-filled for subtask creation |
+| After creating issue via canvas drag | Drop coordinates converted via `screenToFlowPosition`; saved to layout so new node appears at drop location on reload |
+| Click `×` on link edge label | Calls `jiraApi.deleteIssueLink(linkId)`, removes edge from state immediately |
+
+#### Layout persistence
+
+Node positions stored per `{ epicKey, projectKey }` in `AppPrefs.graphLayouts` (array of `GraphLayout`). On load, saved positions are applied first; any new node falls back to auto-grid placement (`60 + col * 280`, `60 + row * 180`). The `saveNewNodePosition` helper merges a single new key into the existing layout without overwriting others.
 
 ### Settings View (`SettingsView.tsx`)
 One-stop configuration panel.
@@ -288,12 +351,16 @@ Two internal helpers:
 | Sprints / Boards | `getBoards` | `(projectKey) → { values: { id, name }[] }` — Agile API |
 | Sprints / Boards | `getBoardSprints` | `(boardId) → { values: JiraSprint[] }` — active + future, max 20 |
 | Epics | `getEpics` | `(projectKey) → { issues }` — JQL `issuetype = Epic` |
+| Epics | `getEpicIssues` | `(epicKey, projectKey?) → JiraIssue[]` — two-phase fetch (JQL children + epic itself + missing subtasks) |
 | Labels | `getLabels` | `() → { values: string[] }` — max 100 |
 | Statuses | `getAllStatuses` | `() → JiraStatus[]` |
 | Statuses | `getProjectStatuses` | `(projectKey) → { id, name, statuses }[]` |
 | Worklog | `logWork` | `(issueKey, timeSpentSeconds, comment?, started?) → void` — comment as ADF; started as ISO |
 | Worklog | `getIssueWorklogs` | `(issueKey, startedAfter?) → { worklogs, total }` — max 1000 |
 | Changelog | `getIssueChangelog` | `(issueKey) → { values: JiraChangelog[], total }` — max 100 |
+| Issue links | `createIssueLink` | `(outwardKey, inwardKey, typeName) → string` — creates link then re-fetches source issue to return the new `linkId` |
+| Issue links | `deleteIssueLink` | `(linkId) → void` — DELETE `/issueLink/:id` |
+| Ranking | `rankIssue` | `(issueKey, beforeKey\|null, afterKey\|null) → void` — Agile API PUT `/issue/rank` |
 
 ---
 
@@ -359,6 +426,15 @@ Builds a JQL query and fetches issues via `jiraApi.searchIssues()`.
 
 Returns `{ issues, setIssues, loading, error, total, reload }`. Non-search changes trigger an immediate fetch (no debounce).
 
+### `useGraphData` (`hooks/useGraphData.ts`)
+
+Drives `GraphView`. Accepts `{ epicKey, projectKey, prefs, onPrefsChange }`.
+
+- On `epicKey` / `projectKey` change: calls `getEpicIssues()`, builds nodes via `issuesToNodes` (saved positions first, auto-grid fallback), builds edges via `issuesToEdges` (parent-child + issuelinks with position-based handle routing)
+- Returns `{ nodes, edges, loading, error, reload, saveLayout, saveNewNodePosition }`
+- `saveLayout(nodes)` — serialises all current node positions into `AppPrefs.graphLayouts`
+- `saveNewNodePosition(issueKey, position)` — merges a single new entry into the saved layout without overwriting existing positions (used after canvas-drop issue creation)
+
 ### `useNotifications` (`hooks/useNotifications.ts`)
 
 Polls Jira for recent assignments; returns `NotificationState` (`{ recent, unreadCount, loading, markAllRead, refresh }`). See [Notifications](#notifications-usenotificationsts) section for full behaviour.
@@ -370,8 +446,15 @@ Polls Jira for recent assignments; returns `NotificationState` (`{ recent, unrea
 ### Core entity types
 `JiraSettings`, `JiraUser`, `JiraPriority`, `JiraStatus`, `JiraIssueType`, `JiraProject`, `JiraComment`, `ContentNode`, `JiraAttachment`, `JiraSprint`, `JiraIssue`, `JiraTransition`, `JiraChangelogItem`, `JiraChangelog`, `JiraWorklog`
 
+`JiraIssueLink` — `{ id, type: { id, name, inward, outward }, inwardIssue?, outwardIssue? }`; referenced from `JiraIssue.fields.issuelinks`
+
+### Graph types
+- `GraphNodePosition` — `{ x: number; y: number }`
+- `GraphLayout` — `{ epicKey, projectKey, positions: Record<string, GraphNodePosition>, updatedAt: number }`
+- `GraphEdgeData` — `{ linkType, linkId, isBlocking }`
+
 ### App types
-- `ViewMode` — `"board" | "list" | "settings" | "time" | "worklog" | "activity"`
+- `ViewMode` — `"board" | "list" | "settings" | "time" | "worklog" | "activity" | "graph"`
 - `StatusCategory` — `"todo" | "inprogress" | "done"`
 - `TimeEntry` — `{ id, startTime, endTime, duration, issueKey?, issueSummary?, notes?, loggedToJira? }`
 - `AdvancedFilter` — `{ summary, assignee, reporter, status }`
@@ -391,6 +474,7 @@ Polls Jira for recent assignments; returns `NotificationState` (`{ recent, unrea
 | `dailyWorkHours` | `number` | `8` | Used for worklog colour-coding |
 | `theme` | `"dark" \| "light" \| "auto"` | `"dark"` | Colour mode |
 | `hiddenProjectKeys` | `string[]` | `[]` | Projects hidden from sidebar list |
+| `graphLayouts` | `GraphLayout[]` | `[]` | Saved node positions per epic+project |
 
 Constants exported: `DEFAULT_PREFS`, `DEFAULT_ADVANCED_FILTER`
 
@@ -401,7 +485,7 @@ Constants exported: `DEFAULT_PREFS`, `DEFAULT_ADVANCED_FILTER`
 | Store | Key | Contents |
 |---|---|---|
 | `electron-store` | `settings` | `JiraSettings` (Jira credentials, plaintext) |
-| `electron-store` | `prefs` | `AppPrefs` (JSON, merged with defaults on read) |
+| `electron-store` | `prefs` | `AppPrefs` (JSON, merged with defaults on read) — includes `graphLayouts` array |
 | `electron-store` | `timeEntries` | `TimeEntry[]` (max 200, deduped by `id`) |
 | `localStorage` | `jw_seen_assignments` | JSON array of seen issue IDs |
 | `localStorage` | `boardColumnOrder_{projectKey}` | JSON array of status IDs (column order) |
