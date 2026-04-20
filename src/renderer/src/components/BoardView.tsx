@@ -1,10 +1,11 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react"
-import { RefreshCw, ChevronDown, Plus, GripVertical } from "lucide-react"
+import { RefreshCw, ChevronDown, Plus, GripVertical, Settings2 } from "lucide-react"
 import { ErrorMessage } from "./ErrorMessage"
 import { statusDotClass } from "./IssueBadges"
 import { useIssues } from "../hooks/useIssues"
 import { IssueCard } from "./IssueCard"
 import { CreateIssueModal } from "./CreateIssueModal"
+import { StatusManagerDialog } from "./StatusManagerDialog"
 import { jiraApi } from "../lib/jira-api"
 import type { JiraIssue, JiraProject, JiraSprint, JiraStatus, AppPrefs } from "../types/jira"
 
@@ -35,6 +36,7 @@ export function BoardView({ selectedProject, projects, filter, searchQuery, onSe
     const [selectedSprint, setSelectedSprint] = useState<string>("active")
     const [sprintOpen, setSprintOpen] = useState(false)
     const [showCreate, setShowCreate] = useState(false)
+    const [showStatusManager, setShowStatusManager] = useState(false)
 
     const { issues, loading, error, total, reload, setIssues } = useIssues({
         selectedProject,
@@ -350,6 +352,15 @@ export function BoardView({ selectedProject, projects, filter, searchQuery, onSe
                     <button onClick={reload} className="btn-icon" disabled={loading}>
                         <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
                     </button>
+                    {selectedProject && (
+                        <button
+                            onClick={() => setShowStatusManager(true)}
+                            className="btn-icon"
+                            title="Spravovat stavy"
+                        >
+                            <Settings2 className="w-4 h-4" />
+                        </button>
+                    )}
                     <button
                         onClick={() => setShowCreate(true)}
                         className="btn-primary flex items-center gap-1.5 text-sm px-3 py-1.5"
@@ -358,6 +369,13 @@ export function BoardView({ selectedProject, projects, filter, searchQuery, onSe
                     </button>
                 </div>
             </div>
+
+            {showStatusManager && selectedProject && (
+                <StatusManagerDialog
+                    project={selectedProject}
+                    onClose={() => setShowStatusManager(false)}
+                />
+            )}
 
             {showCreate && (
                 <CreateIssueModal

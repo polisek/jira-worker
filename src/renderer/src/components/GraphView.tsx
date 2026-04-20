@@ -21,7 +21,7 @@ import { ParentEdge } from "./ParentEdge"
 import { ErrorMessage } from "./ErrorMessage"
 import { CreateIssueModal } from "./CreateIssueModal"
 import { IssueContextMenu } from "./IssueContextMenu"
-import { useGraphData } from "../hooks/useGraphData"
+import { useGraphData, parentChildHandles } from "../hooks/useGraphData"
 import { jiraApi } from "../lib/jira-api"
 import type { JiraProject, JiraIssue, AppPrefs } from "../types/jira"
 
@@ -46,7 +46,16 @@ function GraphCanvas({ selectedProject, prefs, onPrefsChange, onIssueSelect }: P
     const { screenToFlowPosition } = useReactFlow()
     const saveTimeout = useRef<ReturnType<typeof setTimeout>>()
 
-    const { nodes: initNodes, edges: initEdges, loading, error, layoutSource, reload, saveLayout, saveNewNodePosition } = useGraphData({
+    const {
+        nodes: initNodes,
+        edges: initEdges,
+        loading,
+        error,
+        layoutSource,
+        reload,
+        saveLayout,
+        saveNewNodePosition,
+    } = useGraphData({
         epicKey: selectedEpicKey,
         projectKey: selectedProject?.key ?? null,
         prefs,
@@ -56,10 +65,16 @@ function GraphCanvas({ selectedProject, prefs, onPrefsChange, onIssueSelect }: P
     const [nodes, setNodes, onNodesChange] = useNodesState(initNodes)
     const [edges, setEdges, onEdgesChange] = useEdgesState(initEdges)
     const nodesRef = useRef(nodes)
-    useEffect(() => { nodesRef.current = nodes }, [nodes])
+    useEffect(() => {
+        nodesRef.current = nodes
+    }, [nodes])
 
-    useEffect(() => { setNodes(initNodes) }, [initNodes, setNodes])
-    useEffect(() => { setEdges(initEdges) }, [initEdges, setEdges])
+    useEffect(() => {
+        setNodes(initNodes)
+    }, [initNodes, setNodes])
+    useEffect(() => {
+        setEdges(initEdges)
+    }, [initEdges, setEdges])
 
     useEffect(() => {
         if (!selectedProject) return
@@ -73,72 +88,117 @@ function GraphCanvas({ selectedProject, prefs, onPrefsChange, onIssueSelect }: P
     }, [selectedProject])
 
     useEffect(() => {
-        return () => { clearTimeout(saveTimeout.current) }
+        return () => {
+            clearTimeout(saveTimeout.current)
+        }
     }, [])
 
     const onNodeDragStop = useCallback(() => {
         clearTimeout(saveTimeout.current)
-        saveTimeout.current = setTimeout(() => saveLayout(nodes), 800)
-    }, [nodes, saveLayout])
+        saveTimeout.current = setTimeout(() => saveLayout(nodesRef.current), 800)
+
+        // Přepočítej handles parent-child hran podle nových pozic
+        setEdges((eds) =>
+            eds.map((edge) => {
+                if (edge.type !== "parentEdge") return edge
+                const sourceNode = nodesRef.current.find((n) => n.id === edge.source)
+                const targetNode = nodesRef.current.find((n) => n.id === edge.target)
+                if (!sourceNode || !targetNode) return edge
+                const { sourceHandle, targetHandle } = parentChildHandles(
+                    sourceNode.position,
+                    targetNode.position,
+                    (sourceNode.data as any)?.isEpic === true
+                )
+                if (edge.sourceHandle === sourceHandle && edge.targetHandle === targetHandle) return edge
+                return { ...edge, sourceHandle, targetHandle }
+            })
+        )
+    }, [saveLayout, setEdges])
 
     // When two nodes are connected: create Jira link for task→task, visual edge for parent
-    const onConnect = useCallback((connection: Connection) => {
-        const { source, target, sourceHandle } = connection
-        if (!source || !target) return
+    const onConnect = useCallback(
+        (connection: Connection) => {
+            const { source, target, sourceHandle } = connection
+            if (!source || !target) return
 
-        const isBlocks  = sourceHandle === "right-blocks"  || sourceHandle === "left-blocks-src"
-        const isRelates = sourceHandle === "right-relates" || sourceHandle === "left-relates-src"
+            const isBlocks = sourceHandle === "right-blocks" || sourceHandle === "left-blocks-src"
+            const isRelates = sourceHandle === "right-relates" || sourceHandle === "left-relates-src"
 
-        if (isBlocks || isRelates) {
-            const typeName = isBlocks ? "Blocks" : "Relates"
-            const color    = isBlocks ? "#f85149" : "#58a6ff"
-            const tempId   = `temp-${source}-${target}-${Date.now()}`
+            if (isBlocks || isRelates) {
+                const typeName = isBlocks ? "Blocks" : "Relates"
+                const color = isBlocks ? "#f85149" : "#58a6ff"
+                const tempId = `temp-${source}-${target}-${Date.now()}`
 
-            setEdges(eds => addEdge({
-                ...connection,
-                id: tempId,
-                type: "linkEdge",
-                animated: isBlocks,
-                label: isBlocks ? "blocks" : "relates to",
-                data: { linkType: typeName, linkId: "", isBlocking: isBlocks },
-                style: { stroke: color, strokeWidth: isBlocks ? 2 : 1.5, strokeDasharray: isRelates ? "5 3" : undefined },
-                markerEnd: { type: "arrowclosed" as const, color },
-            }, eds))
+                setEdges((eds) =>
+                    addEdge(
+                        {
+                            ...connection,
+                            id: tempId,
+                            type: "linkEdge",
+                            animated: isBlocks,
+                            label: isBlocks ? "blocks" : "relates to",
+                            data: { linkType: typeName, linkId: "", isBlocking: isBlocks },
+                            style: {
+                                stroke: color,
+                                strokeWidth: isBlocks ? 2 : 1.5,
+                                strokeDasharray: isRelates ? "5 3" : undefined,
+                            },
+                            markerEnd: { type: "arrowclosed" as const, color },
+                        },
+                        eds
+                    )
+                )
 
-            jiraApi.createIssueLink(source, target, typeName)
-                .then(linkId => setEdges(eds => eds.map(e => e.id === tempId ? { ...e, data: { ...e.data, linkId } } : e)))
-                .catch(console.error)
-        } else {
-            // Parent-child or epic→task visual edge
-            setEdges(eds => addEdge({
-                ...connection,
-                type: "default",
-                style: { stroke: "#8b5cf6", strokeWidth: 1.5, strokeDasharray: "4 2" },
-                markerEnd: { type: "arrowclosed" as const, color: "#8b5cf6" },
-            }, eds))
-        }
-    }, [setEdges])
+                jiraApi
+                    .createIssueLink(source, target, typeName)
+                    .then((linkId) =>
+                        setEdges((eds) => eds.map((e) => (e.id === tempId ? { ...e, data: { ...e.data, linkId } } : e)))
+                    )
+                    .catch(console.error)
+            } else {
+                // Parent-child or epic→task visual edge
+                setEdges((eds) =>
+                    addEdge(
+                        {
+                            ...connection,
+                            type: "default",
+                            style: { stroke: "#8b5cf6", strokeWidth: 1.5, strokeDasharray: "4 2" },
+                            markerEnd: { type: "arrowclosed" as const, color: "#8b5cf6" },
+                        },
+                        eds
+                    )
+                )
+            }
+        },
+        [setEdges]
+    )
 
     // Drag to empty canvas: epic → create task, task bottom handle → create subtask
-    const onConnectEnd = useCallback((event: MouseEvent | TouchEvent, state: any) => {
-        if (state?.isValid) return
-        const sourceId: string | undefined = state?.fromNode?.id
-        if (!sourceId) return
-        const clientX = "clientX" in event ? event.clientX : event.touches[0]?.clientX ?? 0
-        const clientY = "clientY" in event ? event.clientY : event.touches[0]?.clientY ?? 0
-        dropPositionRef.current = screenToFlowPosition({ x: clientX, y: clientY })
-        const sourceNode = nodesRef.current.find(n => n.id === sourceId)
-        if (sourceNode?.data?.isEpic) {
-            setCreateTaskForEpicKey(sourceId)
-        } else if (state?.fromHandle?.id === "bottom") {
-            setCreateSubtaskForKey(sourceId)
-        }
-    }, [screenToFlowPosition])
+    const onConnectEnd = useCallback(
+        (event: MouseEvent | TouchEvent, state: any) => {
+            if (state?.isValid) return
+            const sourceId: string | undefined = state?.fromNode?.id
+            if (!sourceId) return
+            const clientX = "clientX" in event ? event.clientX : (event.touches[0]?.clientX ?? 0)
+            const clientY = "clientY" in event ? event.clientY : (event.touches[0]?.clientY ?? 0)
+            dropPositionRef.current = screenToFlowPosition({ x: clientX, y: clientY })
+            const sourceNode = nodesRef.current.find((n) => n.id === sourceId)
+            if (sourceNode?.data?.isEpic) {
+                setCreateTaskForEpicKey(sourceId)
+            } else if (state?.fromHandle?.id === "bottom") {
+                setCreateSubtaskForKey(sourceId)
+            }
+        },
+        [screenToFlowPosition]
+    )
 
-    const handleNodeSelect = useCallback(async (issue: JiraIssue) => {
-        const full = await jiraApi.getIssue(issue.key)
-        onIssueSelect(full)
-    }, [onIssueSelect])
+    const handleNodeSelect = useCallback(
+        async (issue: JiraIssue) => {
+            const full = await jiraApi.getIssue(issue.key)
+            onIssueSelect(full)
+        },
+        [onIssueSelect]
+    )
 
     const handleNodeContextMenu = useCallback((event: React.MouseEvent, node: any) => {
         event.preventDefault()
@@ -152,20 +212,26 @@ function GraphCanvas({ selectedProject, prefs, onPrefsChange, onIssueSelect }: P
         [nodes, handleNodeSelect]
     )
 
-    const handleEdgeDelete = useCallback((edgeId: string, linkId: string) => {
-        setEdges(eds => eds.filter(e => e.id !== edgeId))
-        jiraApi.deleteIssueLink(linkId).catch(console.error)
-    }, [setEdges])
+    const handleEdgeDelete = useCallback(
+        (edgeId: string, linkId: string) => {
+            setEdges((eds) => eds.filter((e) => e.id !== edgeId))
+            jiraApi.deleteIssueLink(linkId).catch(console.error)
+        },
+        [setEdges]
+    )
 
     const edgesWithCallback = useMemo(
-        () => edges.map(e => e.type === "linkEdge" ? { ...e, data: { ...e.data, onDelete: handleEdgeDelete } } : e),
+        () => edges.map((e) => (e.type === "linkEdge" ? { ...e, data: { ...e.data, onDelete: handleEdgeDelete } } : e)),
         [edges, handleEdgeDelete]
     )
 
     const epicIssueForModal = useMemo(
-        () => (createTaskForEpicKey
-            ? (nodesRef.current.find(n => n.id === createTaskForEpicKey)?.data?.issue as JiraIssue | undefined) ?? null
-            : null),
+        () =>
+            createTaskForEpicKey
+                ? ((nodesRef.current.find((n) => n.id === createTaskForEpicKey)?.data?.issue as
+                      | JiraIssue
+                      | undefined) ?? null)
+                : null,
         [createTaskForEpicKey]
     )
 
@@ -177,7 +243,8 @@ function GraphCanvas({ selectedProject, prefs, onPrefsChange, onIssueSelect }: P
         )
     }
 
-    const isLight = prefs.theme === "light" || (prefs.theme === "auto" && document.documentElement.classList.contains("light"))
+    const isLight =
+        prefs.theme === "light" || (prefs.theme === "auto" && document.documentElement.classList.contains("light"))
     const rfColorMode = prefs.theme === "auto" ? "system" : prefs.theme
 
     return (
@@ -227,7 +294,11 @@ function GraphCanvas({ selectedProject, prefs, onPrefsChange, onIssueSelect }: P
                                         ? "bg-blue-500/10 text-blue-400 border-blue-500/30"
                                         : "bg-yellow-500/10 text-yellow-500 border-yellow-500/30"
                                 }`}
-                                title={layoutSource === "jira" ? "Layout synchronizován s Jirou — sdíleno se všemi uživateli" : "Layout uložen pouze lokálně — klikni Uložit layout pro sync do Jiry"}
+                                title={
+                                    layoutSource === "jira"
+                                        ? "Layout synchronizován s Jirou — sdíleno se všemi uživateli"
+                                        : "Layout uložen pouze lokálně — klikni Uložit layout pro sync do Jiry"
+                                }
                             >
                                 {layoutSource === "jira" ? "☁ Jira" : "💾 Lokální"}
                             </span>
@@ -249,7 +320,10 @@ function GraphCanvas({ selectedProject, prefs, onPrefsChange, onIssueSelect }: P
             </div>
 
             {error && (
-                <ErrorMessage message={error} className="mx-4 mt-2 px-3 py-2 bg-red-900/30 border border-red-700/30 rounded shrink-0" />
+                <ErrorMessage
+                    message={error}
+                    className="mx-4 mt-2 px-3 py-2 bg-red-900/30 border border-red-700/30 rounded shrink-0"
+                />
             )}
 
             {!selectedEpicKey && !loading && (
@@ -279,16 +353,27 @@ function GraphCanvas({ selectedProject, prefs, onPrefsChange, onIssueSelect }: P
                         colorMode={rfColorMode}
                         defaultEdgeOptions={{ type: "default" }}
                     >
-                        <Background variant={BackgroundVariant.Dots} gap={20} size={1} color={isLight ? "#d0d7de" : "#1f2937"} />
+                        <Background
+                            variant={BackgroundVariant.Dots}
+                            gap={20}
+                            size={1}
+                            color={isLight ? "#d0d7de" : "#1f2937"}
+                        />
                         <Controls className="!rounded-lg" />
                         <MiniMap
                             nodeColor={(n) => {
                                 const key = (n.data as any)?.issue?.fields?.status?.statusCategory?.key
                                 return key === "done"
-                                    ? isLight ? "#bbf7d0" : "#14532d"
+                                    ? isLight
+                                        ? "#bbf7d0"
+                                        : "#14532d"
                                     : key === "indeterminate"
-                                    ? isLight ? "#bfdbfe" : "#1d3a5c"
-                                    : isLight ? "#e5e7eb" : "#374151"
+                                      ? isLight
+                                          ? "#bfdbfe"
+                                          : "#1d3a5c"
+                                      : isLight
+                                        ? "#e5e7eb"
+                                        : "#374151"
                             }}
                             className="!rounded-lg"
                         />

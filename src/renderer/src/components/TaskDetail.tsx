@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react"
-import { X, Send, RefreshCw, ChevronRight, Save } from "lucide-react"
+import { X, Send, RefreshCw, ChevronRight, Save, Settings2 } from "lucide-react"
 import { jiraApi } from "../lib/jira-api"
 import { adfToText, formatDate } from "../lib/adf-to-text"
 import { UserPicker } from "./UserPicker"
@@ -7,6 +7,7 @@ import { StatusBadge } from "./IssueBadges"
 import { AdfContent } from "./AdfContent"
 import { TimeTracking } from "./TimeTracking"
 import { LogWorkDialog } from "./LogWorkDialog"
+import { StatusManagerDialog } from "./StatusManagerDialog"
 import type { JiraIssue, JiraTransition, JiraUser, AppPrefs } from "../types/jira"
 
 interface Props {
@@ -33,6 +34,7 @@ export function TaskDetail({ issue, prefs, onClose, onUpdate }: Props) {
     const [navStack, setNavStack] = useState<JiraIssue[]>([])
     const [panelWidth, setPanelWidth] = useState(480)
     const [logWorkOpen, setLogWorkOpen] = useState(false)
+    const [statusManagerOpen, setStatusManagerOpen] = useState(false)
     const dragStartX = useRef<number | null>(null)
     const dragStartWidth = useRef<number>(480)
 
@@ -230,7 +232,16 @@ export function TaskDetail({ issue, prefs, onClose, onUpdate }: Props) {
                 {/* Transitions */}
                 {transitions.length > 0 && (
                     <div className="px-4 py-3 border-b border-gray-800">
-                        <p className="text-xs text-gray-500 mb-2">Přesunout do stavu</p>
+                        <div className="flex items-center justify-between mb-2">
+                            <p className="text-xs text-gray-500">Přesunout do stavu</p>
+                            <button
+                                className="btn-icon"
+                                onClick={() => setStatusManagerOpen(true)}
+                                title="Spravovat stavy"
+                            >
+                                <Settings2 className="w-3.5 h-3.5" />
+                            </button>
+                        </div>
                         <div className="flex flex-wrap gap-1.5">
                             {transitions.map((t) => (
                                 <button
@@ -469,6 +480,13 @@ export function TaskDetail({ issue, prefs, onClose, onUpdate }: Props) {
                     dailyWorkHours={prefs.dailyWorkHours}
                     onClose={() => setLogWorkOpen(false)}
                     onLogged={() => loadDetail()}
+                />
+            )}
+
+            {statusManagerOpen && (
+                <StatusManagerDialog
+                    project={detail.fields.project}
+                    onClose={() => setStatusManagerOpen(false)}
                 />
             )}
         </div>

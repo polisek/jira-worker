@@ -282,12 +282,8 @@
 
     .btn-sm {
         @apply flex items-center gap-1 text-xs px-2.5 py-1 rounded-md transition-colors disabled:opacity-50;
-        background: var(--c-btn-sm);
         color: var(--c-text-2);
         border: 1px solid var(--c-border-card);
-    }
-    .btn-sm:hover:not(:disabled) {
-        background: var(--c-btn-sec);
     }
 
     .btn-icon {

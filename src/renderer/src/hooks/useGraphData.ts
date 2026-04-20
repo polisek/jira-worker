@@ -46,6 +46,26 @@ function issuesToNodes(issues: JiraIssue[], savedPositions: Record<string, Graph
     })
 }
 
+/** Vrátí sourceHandle a targetHandle pro parent-child hranu podle vzájemné polohy nodů */
+export function parentChildHandles(
+    parentPos: GraphNodePosition,
+    childPos: GraphNodePosition,
+    parentIsEpic: boolean
+): { sourceHandle: string; targetHandle: string } {
+    const dx = childPos.x - parentPos.x
+    const dy = childPos.y - parentPos.y
+
+    if (Math.abs(dy) >= Math.abs(dx)) {
+        // Vertikální osa dominuje
+        if (dy >= 0) return { sourceHandle: "bottom",                                      targetHandle: "top" }
+        else         return { sourceHandle: "top-src",                                     targetHandle: "bottom-tgt" }
+    } else {
+        // Horizontální osa dominuje
+        if (dx >= 0) return { sourceHandle: parentIsEpic ? "right" : "right-parent",      targetHandle: "left-parent" }
+        else         return { sourceHandle: parentIsEpic ? "left-src" : "left-parent-src", targetHandle: "right-parent-tgt" }
+    }
+}
+
 function issuesToEdges(issues: JiraIssue[], positions: Record<string, GraphNodePosition>): Edge[] {
     const edges: Edge[] = []
     const seen = new Set<string>()
@@ -62,11 +82,16 @@ function issuesToEdges(issues: JiraIssue[], positions: Record<string, GraphNodeP
         // Parent → child hierarchy edges (Epic→Task, Task→Subtask)
         const parentKey = issue.fields.parent?.key
         if (parentKey && issueKeys.has(parentKey)) {
+            const { sourceHandle, targetHandle } = parentChildHandles(
+                positions[parentKey] ?? { x: 0, y: 0 },
+                positions[issue.key]  ?? { x: 0, y: 0 },
+                epicKeys.has(parentKey)
+            )
             addEdge(`parent--${parentKey}--${issue.key}`, parentKey, issue.key, {
                 type: "parentEdge",
                 animated: false,
-                sourceHandle: "bottom",
-                targetHandle: "top",
+                sourceHandle,
+                targetHandle,
                 data: { originalEstimate: issue.fields.timeoriginalestimate ?? 0 },
                 style: { stroke: "#8b5cf6", strokeWidth: 1.5, strokeDasharray: "4 2" },
                 markerEnd: { type: "arrowclosed" as const, color: "#8b5cf6" },
