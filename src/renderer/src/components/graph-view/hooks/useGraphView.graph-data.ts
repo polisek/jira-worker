@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import type { Node, Edge } from "@xyflow/react"
-import { jiraApi } from "../utils/jira-api"
-import type { JiraIssue, GraphLayout, GraphNodePosition, AppPrefs } from "../types/jira"
+import { jiraApi } from "../../../utils/jira-api"
+import type { JiraIssue, GraphLayout, GraphNodePosition, AppPrefs } from "../../../types/jira"
 
 interface UseGraphDataProps {
     epicKey: string | null

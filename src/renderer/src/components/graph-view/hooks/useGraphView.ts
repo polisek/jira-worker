@@ -1,0 +1,53 @@
+import { useState } from "react"
+import useGraphViewData, { type GraphViewDataProps } from "./useGraphView.data"
+import useGraphViewController, { type GraphViewControllerProps } from "./useGraphView.controller"
+import type { JiraProject, JiraIssue, AppPrefs } from "../../../types/jira"
+
+export type useGraphViewProps = {
+    selectedProject: JiraProject | null
+    prefs: AppPrefs
+    onPrefsChange: (prefs: Partial<AppPrefs>) => void
+    onIssueSelect: (issue: JiraIssue) => void
+    initialEpicKey?: string | null
+}
+
+export type GraphViewProps = {
+    selectedProject: JiraProject | null
+    prefs: AppPrefs
+    selectedEpicKey: string | null
+    setSelectedEpicKey: (key: string | null) => void
+    dataProps: GraphViewDataProps
+    controllerProps: GraphViewControllerProps
+}
+
+const useGraphView = ({
+    selectedProject,
+    prefs,
+    onPrefsChange,
+    onIssueSelect,
+    initialEpicKey,
+}: useGraphViewProps): GraphViewProps => {
+    const [selectedEpicKey, setSelectedEpicKey] = useState<string | null>(initialEpicKey ?? null)
+
+    const dataProps = useGraphViewData({
+        selectedProject,
+        selectedEpicKey,
+        prefs,
+        onPrefsChange,
+        initialEpicKey,
+        onSelectedEpicKeyChange: setSelectedEpicKey,
+    })
+
+    const controllerProps = useGraphViewController(dataProps, onIssueSelect)
+
+    return {
+        selectedProject,
+        prefs,
+        selectedEpicKey,
+        setSelectedEpicKey,
+        dataProps,
+        controllerProps,
+    }
+}
+
+export default useGraphView

@@ -1,7 +1,7 @@
 import { Handle, Position } from "@xyflow/react"
 import type { NodeProps } from "@xyflow/react"
-import type { JiraIssue } from "../types/jira"
-import { StatusBadge, PriorityBadge } from "./IssueBadges"
+import type { JiraIssue } from "../../../types/jira"
+import { StatusBadge, PriorityBadge } from "../../IssueBadges"
 
 interface IssueNodeData {
     issue: JiraIssue

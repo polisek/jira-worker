@@ -12,7 +12,7 @@ import { TimeTrackingView } from "./components/TimeTrackingView"
 import { WorkLogView } from "./components/WorkLogView"
 import { ActivityView } from "./components/ActivityView"
 import { TreeView } from "./components/TreeView"
-import { GraphView } from "./components/GraphView"
+import { GraphView } from "./components/graph-view"
 import type { JiraSettings, JiraIssue, JiraProject, ViewMode, AppPrefs } from "./types/jira"
 import { DEFAULT_PREFS as DEFAULTS } from "./types/jira"
 
