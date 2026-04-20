@@ -1,5 +1,5 @@
 import { Plus } from 'lucide-react'
-import { TimeTracking, OriginalEstimateField } from '../../TimeTracking'
+import { TimeTracking, OriginalEstimateField } from './TimeTracking'
 import { DetailCard } from './DetailCard'
 import type { JiraIssue } from '../../../types/jira'
 

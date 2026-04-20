@@ -1,7 +1,7 @@
 import { useRef } from 'react'
 import { Send, RefreshCw } from 'lucide-react'
 import { useAddCommentAdfMutation } from '../../../api/comments/add-comment-adf'
-import { AdfContent } from '../../AdfContent'
+import { AdfContent } from '../../adf/AdfContent'
 import { RichTextEditor, type RichTextEditorRef } from '../../RichTextEditor'
 import { DetailCard } from './DetailCard'
 import { formatDate } from '../../../utils/adf'
