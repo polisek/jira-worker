@@ -48,11 +48,12 @@ interface Props {
     placeholder?: string
     minHeight?: number
     autoFocus?: boolean
+    stickyToolbar?: boolean
     onCtrlEnter?: () => void
 }
 
 export const RichTextEditor = forwardRef<RichTextEditorRef, Props>(
-    ({ initialContent, placeholder = "Začněte psát...", minHeight = 120, autoFocus = false, onCtrlEnter }, ref) => {
+    ({ initialContent, placeholder = "Začněte psát...", minHeight = 120, autoFocus = false, stickyToolbar = false, onCtrlEnter }, ref) => {
         const [showColorPicker, setShowColorPicker] = useState(false)
         const [showLinkInput, setShowLinkInput] = useState(false)
         const [linkUrl, setLinkUrl] = useState("")
@@ -136,9 +137,12 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, Props>(
         if (!editor) return null
 
         return (
-            <div className="rich-editor rounded-lg overflow-hidden border border-gray-700 focus-within:border-blue-500/60 transition-colors">
+            <div className={`rich-editor rounded-lg border border-gray-700 focus-within:border-blue-500/60 transition-colors${stickyToolbar ? '' : ' overflow-hidden'}`}>
                 {/* Toolbar */}
-                <div className="flex items-center gap-0.5 px-1.5 py-1 border-b border-gray-700 flex-wrap" style={{ background: "var(--c-bg-card)" }}>
+                <div
+                    className={`flex items-center gap-0.5 px-1.5 py-1 border-b border-gray-700 flex-wrap${stickyToolbar ? ' sticky top-0 z-10 rounded-t-lg' : ''}`}
+                    style={{ background: "var(--c-bg-card)" }}
+                >
                     <ToolbarBtn
                         onMouseDown={() => editor.chain().focus().toggleBold().run()}
                         active={editor.isActive("bold")}
