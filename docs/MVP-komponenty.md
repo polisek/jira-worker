@@ -417,6 +417,12 @@ Referenční implementace: `apps/web/src/pages/clients/detail/components/insuran
 
 ---
 
+## Project-specific vzory
+
+Jira Worker-specific vzory (DetailCard, section components, transition buttons, double-click editing) jsou zdokumentovány v **[docs/MVP-vzory.md](./MVP-vzory.md)**.
+
+---
+
 ## Shrnutí pravidel
 
 1. **Každý soubor má jednu zodpovědnost** – data / form / actions / controller jsou vždy v oddělených souborech.

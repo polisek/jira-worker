@@ -57,13 +57,16 @@ yarn dist:win     # build + NSIS instalátor pro Windows (výstup: dist/)
 
 ```
 komponenta
-  → jiraApi.*(...)                 (src/lib/jira-api.ts)
-  → window.api.jiraRequest(...)    (preload contextBridge)
+  → hook (src/renderer/src/api/<doména>/<akce>.ts)
+  → request() / agileRequest()   (src/renderer/src/api/client.ts)
+  → window.api.jiraRequest(...)  (preload contextBridge)
   → ipcMain.handle('jira:request') (main/index.ts)
   → fetch(Jira Cloud REST API)
 ```
 
-`jira-api.ts` používá dvě interní funkce:
+`jira-api.ts` v `src/lib/` je starší obálka — nový kód preferuje přímé hooky ze `src/api/`.
+
+Dvě transport funkce v `client.ts`:
 - `request(method, path, body)` → Jira REST API v3 (`/rest/api/3{path}`)
 - `agileRequest(path)` → Jira Agile API v1.0 (`/rest/agile/1.0{path}`) — cesta se prefixuje `__agile__` jako signál pro main process
 
@@ -80,10 +83,18 @@ src/
 └── renderer/src/
     ├── App.tsx                 # Root komponenta, správa globálního stavu
     ├── main.tsx                # ReactDOM.createRoot entry point
+    ├── api/                    # React Query hooky a request funkce (viz docs/api.md)
+    │   ├── client.ts           # request() + agileRequest() helpers
+    │   ├── queryKeys.ts        # Centrální registr cache klíčů
+    │   └── <doména>/           # boards, issues, transitions, users, worklogs, …
     ├── components/
+    │   ├── task-detail/        # MVP komponenta detailu issue (viz docs/MVP-vzory.md)
+    │   │   ├── index.tsx       # wrap(TaskDetailView, useTaskDetail)
+    │   │   ├── hooks/          # useTaskDetail.ts / .data.ts / .controller.ts
+    │   │   ├── views/          # TaskDetailView.tsx
+    │   │   └── components/     # DetailCard, TransitionsSection, TimeSection, …
     │   ├── BoardView.tsx       # Kanban (dynamické sloupce ze statusů, drag & drop)
     │   ├── ListView.tsx        # Tabulkový přehled
-    │   ├── TaskDetail.tsx      # Detail panel (vpravo, slide-in)
     │   ├── CreateIssueModal.tsx # Modál pro nový task
     │   ├── Sidebar.tsx         # Levý panel: projekty, filtry, vyhledávání, notifikace
     │   ├── SettingsView.tsx    # Nastavení přístupu (Jira) + App předvolby
@@ -95,7 +106,7 @@ src/
     │   ├── useIssues.ts        # JQL fetch s debounce (400ms pro search)
     │   └── useNotifications.ts # Polling přiřazení, localStorage pro seen IDs
     ├── lib/
-    │   ├── jira-api.ts         # Obálka nad Jira API — všechny API metody zde
+    │   ├── jira-api.ts         # Legacy API obálka (starší komponenty — nový kód používá src/api/)
     │   └── adf-to-text.ts      # ADF → plain text + ADF → HTML konvertor
     ├── types/jira.ts           # Sdílené TypeScript typy + DEFAULT_PREFS konstanta
     └── styles/globals.css      # Tailwind + vlastní CSS komponenty (@layer components)
@@ -107,9 +118,10 @@ src/
 
 | Úkol | Kde |
 |---|---|
-| Nová Jira API metoda | `src/renderer/src/lib/jira-api.ts` — přidat do `jiraApi` objektu |
+| Nová Jira API metoda | `src/renderer/src/api/<doména>/<akce>.ts` — viz [`docs/api.md`](docs/api.md) |
 | Nový IPC kanál | `src/main/index.ts` + `src/preload/index.ts` + `src/preload/index.d.ts` |
 | Nová UI komponenta | `src/renderer/src/components/` |
+| Komplexní komponenta (MVP) | `src/renderer/src/components/<feature-name>/` — viz [`docs/MVP-komponenty.md`](docs/MVP-komponenty.md) |
 | Nový React hook | `src/renderer/src/hooks/` |
 | Nový Jira typ | `src/renderer/src/types/jira.ts` |
 | Globální CSS třída | `src/renderer/src/styles/globals.css` v `@layer components` |
@@ -149,6 +161,15 @@ src/
 - **Lokální stav** zůstává v komponentě nebo hooku kde vznikl
 - **Žádný state manager** (Redux, Zustand apod.) — použít React useState + prop drilling nebo callback props
 - **Perzistence** pouze přes `electron-store` (main process) nebo `localStorage` (jen pro `useNotifications` — seznam viděných ID)
+
+---
+
+## Klíčové referenční dokumenty
+
+- **[docs/api.md](docs/api.md)** — konvence API souborů, naming, vzorové implementace (vč. Jira Worker sekce)
+- **[docs/MVP-komponenty.md](docs/MVP-komponenty.md)** — MVP architektura komponent, hooky, View/Controller/Data vzory
+- **[docs/MVP-vzory.md](docs/MVP-vzory.md)** — project-specific vzory: DetailCard, section components, transition buttons, double-click editing
+- **[docs/features.md](docs/features.md)** — inventář features, IPC kanálů, API metod
 
 ---
 

@@ -256,6 +256,51 @@ komponenta
 
 `agileRequest()` prefixuje cestu `__agile__` jako signál pro main process, aby použil `/rest/agile/1.0` místo `/rest/api/3`.
 
+## Vzorová implementace souboru (Jira Worker)
+
+Bez Axios a bez tokenu — transport je `request()` / `agileRequest()` z `client.ts`:
+
+```ts
+// src/renderer/src/api/issues/get-issue.ts
+import { useQuery } from '@tanstack/react-query'
+import type { UseQueryOptions } from '@tanstack/react-query'
+import { request } from '../client'
+import { queryKeys } from '../queryKeys'
+import type { JiraIssue } from '../../types/jira'
+
+export async function getIssueRequest(key: string): Promise<JiraIssue> {
+    return request('GET', `/issue/${key}?fields=summary,status,...`)
+}
+
+export function useIssueQuery(
+    key: string,
+    options?: Pick<UseQueryOptions<JiraIssue>, 'enabled' | 'refetchInterval'>
+) {
+    return useQuery<JiraIssue>({
+        ...options,
+        queryKey: queryKeys.issues.detail(key),
+        queryFn: () => getIssueRequest(key),
+        enabled: !!key && (options?.enabled ?? true),
+    })
+}
+```
+
+Mutace — invalidace bez `setQueryData` (Jira vrací jen `204`/chybu, ne aktualizovaný objekt):
+
+```ts
+// src/renderer/src/api/issues/update-issue.ts
+export function useUpdateIssueMutation(key: string) {
+    const queryClient = useQueryClient()
+    return useMutation({
+        mutationFn: (body: Record<string, unknown>) =>
+            request('PUT', `/issue/${key}`, { fields: body }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.issues.detail(key) })
+        },
+    })
+}
+```
+
 
 
 ## Přidání nového API volání – checklist (Jira Worker)

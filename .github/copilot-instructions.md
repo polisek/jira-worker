@@ -4,6 +4,9 @@
 
 - **[agents.md](../agents.md)** — architecture overview, code conventions, where to add code, and common pitfalls.
 - **[docs/features.md](../docs/features.md)** — full feature inventory (views, API methods, IPC channels, data persistence).
+- **[docs/MVP-komponenty.md](../docs/MVP-komponenty.md)** — MVP component architecture (hooks, views, controllers).
+- **[docs/MVP-vzory.md](../docs/MVP-vzory.md)** — project-specific patterns: DetailCard sections, transition buttons, double-click editing.
+- **[docs/api.md](../docs/api.md)** — API file conventions and Jira Worker transport specifics.
 - **[.claude/CLAUDE.md](../.claude/CLAUDE.md)** — concise quick-start rules shared with Claude Code.
 
 ## Architecture summary
