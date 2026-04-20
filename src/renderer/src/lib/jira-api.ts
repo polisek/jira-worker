@@ -107,6 +107,10 @@ export const jiraApi = {
         })
     },
 
+    addCommentAdf(key: string, body: Record<string, unknown>): Promise<JiraComment> {
+        return request("POST", `/issue/${key}/comment`, { body })
+    },
+
     // Projects
     getProjects(): Promise<JiraProject[]> {
         return request("GET", "/project?expand=description&orderBy=name")

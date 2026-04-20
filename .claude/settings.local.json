@@ -9,7 +9,10 @@
       "Bash(yarn add *)",
       "Bash(yarn tsc *)",
       "WebSearch",
-      "Bash(yarn build *)"
+      "Bash(yarn build *)",
+      "Bash(yarn dev *)",
+      "Bash(kill %1)",
+      "Bash(wait)"
     ]
   }
 }

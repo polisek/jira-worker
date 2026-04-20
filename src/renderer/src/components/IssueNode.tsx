@@ -121,7 +121,8 @@ export function IssueNode({ data }: NodeProps) {
             <Handle type="target" position={Position.Left} id="left-blocks"  style={{ top: "75%" }}
                 className={`${H} !bg-red-500 !border-red-400`}    title="Přijmout vazbu Blokuje" />
             <Handle type="source" position={Position.Left} id="left-relates-src" style={{ top: "25%" }} connectable={false} className={G} />
-            <Handle type="source" position={Position.Left} id="left-parent-src"  style={{ top: "50%" }} connectable={false} className={G} />
+            <Handle type="source" position={Position.Left} id="left-parent-src"  style={{ top: "50%" }}
+                className={`${H} !bg-purple-500 !border-purple-400`} title="Táhni: Nadřazený úkol" />
             <Handle type="source" position={Position.Left} id="left-blocks-src"  style={{ top: "75%" }} connectable={false} className={G} />
 
             {/* Right — 3 viditelné sourcey (25 % modrý, 50 % fialový, 75 % červený) + target ghosts */}

@@ -41,6 +41,13 @@ export function adfToHtml(node: ContentNode | null | undefined): string {
             return `<ol>${node.content?.map(adfToHtml).join("") ?? ""}</ol>`
         case "listItem":
             return `<li>${node.content?.map(adfToHtml).join("") ?? ""}</li>`
+        case "taskList":
+            return `<ul data-type="taskList">${node.content?.map(adfToHtml).join("") ?? ""}</ul>`
+        case "taskItem": {
+            const checked = (node.attrs as any)?.state === "DONE"
+            const content = node.content?.map(adfToHtml).join("") ?? ""
+            return `<li data-type="taskItem" data-checked="${checked}"><label><input type="checkbox" ${checked ? "checked" : ""} disabled /></label><div>${content}</div></li>`
+        }
         case "heading": {
             const level = (node.attrs as any)?.level ?? 2
             return `<h${level}>${node.content?.map(adfToHtml).join("") ?? ""}</h${level}>`

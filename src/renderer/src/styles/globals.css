@@ -80,7 +80,6 @@
         background: var(--c-bg-app);
         color: var(--c-text);
         overflow: hidden;
-        user-select: none;
     }
 
     ::-webkit-scrollbar {
@@ -418,6 +417,56 @@
 
     .adf-emoji {
         @apply text-base;
+    }
+
+    /* Task list (TipTap + ADF display) */
+    .adf-content ul[data-type="taskList"] {
+        list-style: none;
+        padding-left: 0;
+        @apply mb-2;
+    }
+    .adf-content ul[data-type="taskList"] li {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        @apply mb-1;
+    }
+    .adf-content ul[data-type="taskList"] li > label {
+        flex-shrink: 0;
+        margin-top: 2px;
+        cursor: pointer;
+    }
+    .adf-content ul[data-type="taskList"] li > label input[type="checkbox"] {
+        cursor: pointer;
+        accent-color: #3b82f6;
+    }
+    .adf-content ul[data-type="taskList"] li > div {
+        flex: 1;
+        min-width: 0;
+    }
+    .adf-content ul[data-type="taskList"] li[data-checked="true"] > div {
+        text-decoration: line-through;
+        opacity: 0.55;
+    }
+
+    /* Rich text editor */
+    .rich-editor-content {
+        user-select: text;
+        cursor: text;
+        padding: 8px 12px;
+    }
+    .rich-editor-content p.is-editor-empty:first-child::before {
+        content: attr(data-placeholder);
+        color: var(--c-text-4);
+        pointer-events: none;
+        float: left;
+        height: 0;
+    }
+    .rich-editor-content p {
+        @apply mb-2 last:mb-0;
+    }
+    .rich-editor-content a {
+        @apply text-blue-400 underline;
     }
 
     /* Modal / dialog panel */

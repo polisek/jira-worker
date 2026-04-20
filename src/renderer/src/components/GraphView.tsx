@@ -188,9 +188,10 @@ function GraphCanvas({ selectedProject, prefs, onPrefsChange, onIssueSelect, ini
             const clientY = "clientY" in event ? event.clientY : (event.touches[0]?.clientY ?? 0)
             dropPositionRef.current = screenToFlowPosition({ x: clientX, y: clientY })
             const sourceNode = nodesRef.current.find((n) => n.id === sourceId)
+            const handleId: string | undefined = state?.fromHandle?.id
             if (sourceNode?.data?.isEpic) {
                 setCreateTaskForEpicKey(sourceId)
-            } else if (state?.fromHandle?.id === "bottom") {
+            } else if (handleId === "bottom" || handleId === "right-parent" || handleId === "left-parent-src") {
                 setCreateSubtaskForKey(sourceId)
             }
         },

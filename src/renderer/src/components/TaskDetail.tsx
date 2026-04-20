@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { X, Send, RefreshCw, ChevronRight, Save, Settings2, Network } from "lucide-react"
 import { jiraApi } from "../lib/jira-api"
-import { adfToText, formatDate } from "../lib/adf-to-text"
+import { formatDate } from "../lib/adf-to-text"
 import { UserPicker } from "./UserPicker"
 import { StatusBadge } from "./IssueBadges"
 import { AdfContent } from "./AdfContent"
 import { TimeTracking } from "./TimeTracking"
 import { LogWorkDialog } from "./LogWorkDialog"
 import { StatusManagerDialog } from "./StatusManagerDialog"
+import { RichTextEditor, type RichTextEditorRef } from "./RichTextEditor"
 import type { JiraIssue, JiraTransition, JiraUser, AppPrefs } from "../types/jira"
 
 interface Props {
@@ -22,15 +23,15 @@ export function TaskDetail({ issueKey, prefs, onClose, onOpenGraph }: Props) {
     const [detail, setDetail] = useState<JiraIssue | null>(null)
     const [loading, setLoading] = useState(false)
     const [transitions, setTransitions] = useState<JiraTransition[]>([])
-    const [comment, setComment] = useState("")
     const [sendingComment, setSendingComment] = useState(false)
     const [transitioning, setTransitioning] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [assignableUsers, setAssignableUsers] = useState<JiraUser[]>([])
     const [reassigning, setReassigning] = useState(false)
     const [editingDesc, setEditingDesc] = useState(false)
-    const [descDraft, setDescDraft] = useState("")
     const [savingDesc, setSavingDesc] = useState(false)
+    const descEditorRef = useRef<RichTextEditorRef>(null)
+    const commentEditorRef = useRef<RichTextEditorRef>(null)
     const [navStack, setNavStack] = useState<JiraIssue[]>([])
     const [parentChain, setParentChain] = useState<string[]>([])
     const [panelWidth, setPanelWidth] = useState(480)
@@ -172,24 +173,15 @@ export function TaskDetail({ issueKey, prefs, onClose, onOpenGraph }: Props) {
     }
 
     const handleDescEdit = () => {
-        if (!detail) return
-        setDescDraft(adfToText(detail.fields.description as any))
         setEditingDesc(true)
     }
 
     const handleSaveDesc = async () => {
-        if (!detail) return
+        if (!detail || !descEditorRef.current) return
         setSavingDesc(true)
         setError(null)
         try {
-            const adf = {
-                type: "doc",
-                version: 1,
-                content: descDraft.split("\n").map((line) => ({
-                    type: "paragraph",
-                    content: line ? [{ type: "text", text: line }] : [],
-                })),
-            }
+            const adf = descEditorRef.current.getAdf()
             await jiraApi.updateIssue(detail.key, { description: adf })
             setDetail((prev) => prev ? { ...prev, fields: { ...prev.fields, description: adf as any } } : prev)
             setEditingDesc(false)
@@ -201,12 +193,14 @@ export function TaskDetail({ issueKey, prefs, onClose, onOpenGraph }: Props) {
     }
 
     const handleComment = async () => {
-        if (!comment.trim() || !detail) return
+        if (!detail || !commentEditorRef.current) return
+        if (commentEditorRef.current.isEmpty()) return
         setSendingComment(true)
         setError(null)
         try {
-            await jiraApi.addComment(detail.key, comment.trim())
-            setComment("")
+            const adf = commentEditorRef.current.getAdf()
+            await jiraApi.addCommentAdf(detail.key, adf as Record<string, unknown>)
+            commentEditorRef.current.clear()
             await loadDetail(detail.key)
         } catch (e: any) {
             setError(e.message)
@@ -420,14 +414,13 @@ export function TaskDetail({ issueKey, prefs, onClose, onOpenGraph }: Props) {
                     </div>
                     {editingDesc ? (
                         <>
-                            <textarea
-                                value={descDraft}
-                                onChange={(e) => setDescDraft(e.target.value)}
-                                rows={8}
-                                className="input w-full resize-y text-sm font-mono mb-2"
+                            <RichTextEditor
+                                ref={descEditorRef}
+                                initialContent={detail.fields.description as any}
+                                minHeight={180}
                                 autoFocus
                             />
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 mt-2">
                                 <button
                                     onClick={handleSaveDesc}
                                     disabled={savingDesc}
@@ -522,31 +515,28 @@ export function TaskDetail({ issueKey, prefs, onClose, onOpenGraph }: Props) {
 
                     {/* Add comment */}
                     {error && <p className="text-red-400 text-xs mb-2">{error}</p>}
-                    <div className="flex gap-2">
-                        <textarea
-                            value={comment}
-                            onChange={(e) => setComment(e.target.value)}
-                            placeholder="Přidat komentář..."
-                            rows={2}
-                            className="input flex-1 resize-none text-sm"
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter" && e.ctrlKey) handleComment()
-                            }}
-                        />
+                    <RichTextEditor
+                        ref={commentEditorRef}
+                        placeholder="Přidat komentář..."
+                        minHeight={72}
+                        onCtrlEnter={handleComment}
+                    />
+                    <div className="flex items-center justify-between mt-2">
+                        <p className="text-xs text-gray-600">Ctrl+Enter pro odeslání</p>
                         <button
                             onClick={handleComment}
-                            disabled={sendingComment || !comment.trim()}
-                            className="btn-primary self-end px-3 py-2"
+                            disabled={sendingComment}
+                            className="btn-primary flex items-center gap-1.5 text-xs px-3 py-1.5"
                             title="Odeslat (Ctrl+Enter)"
                         >
                             {sendingComment ? (
-                                <RefreshCw className="w-4 h-4 animate-spin" />
+                                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                             ) : (
-                                <Send className="w-4 h-4" />
+                                <Send className="w-3.5 h-3.5" />
                             )}
+                            Odeslat
                         </button>
                     </div>
-                    <p className="text-xs text-gray-600 mt-1">Ctrl+Enter pro odeslání</p>
                 </div>
             </div>
 
