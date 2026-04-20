@@ -6,6 +6,9 @@ This file is loaded automatically by Claude Code for every session in this repos
 
 - **[agents.md](../agents.md)** — full architecture guide, code conventions, where to add code, and common pitfalls. **Read this first.**
 - **[docs/features.md](../docs/features.md)** — comprehensive feature overview (views, API layer, IPC channels, persistence).
+- **[docs/MVP-komponenty.md](../docs/MVP-komponenty.md)** — MVP component architecture (hooks, views, controllers).
+- **[docs/MVP-vzory.md](../docs/MVP-vzory.md)** — project-specific patterns: DetailCard sections, transition buttons, double-click editing.
+- **[docs/api.md](../docs/api.md)** — API file conventions and Jira Worker transport specifics.
 
 ## Essential rules
 

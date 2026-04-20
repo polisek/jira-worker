@@ -519,6 +519,90 @@
     .react-flow__attribution {
         @apply hidden;
     }
+
+    /* ── Detail section cards ─────────────────────────────────────── */
+    .detail-section-card {
+        background: var(--c-bg-card);
+        border: 1px solid var(--c-border-card);
+        @apply rounded-xl mx-3 mb-3;
+    }
+
+    .detail-section-card-header {
+        @apply flex items-center justify-between px-4 py-2.5;
+        border-bottom: 1px solid var(--c-border-card);
+    }
+
+    .detail-section-card-content {
+        @apply px-4 py-3;
+    }
+
+    .detail-section-card-footer {
+        @apply flex items-center justify-between px-4 py-2.5;
+        border-top: 1px solid var(--c-border-card);
+    }
+
+    /* Transition buttons (colored by target status category) */
+    .transition-btn {
+        @apply flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 font-medium;
+        border: 1px solid;
+    }
+
+    .transition-btn-done {
+        background: rgba(74, 222, 128, 0.08);
+        color: #4ade80;
+        border-color: rgba(74, 222, 128, 0.25);
+    }
+    .transition-btn-done:hover:not(:disabled) {
+        background: rgba(74, 222, 128, 0.16);
+    }
+
+    .transition-btn-progress {
+        background: rgba(96, 165, 250, 0.08);
+        color: #60a5fa;
+        border-color: rgba(96, 165, 250, 0.25);
+    }
+    .transition-btn-progress:hover:not(:disabled) {
+        background: rgba(96, 165, 250, 0.16);
+    }
+
+    .transition-btn-todo {
+        background: rgba(107, 114, 128, 0.08);
+        color: var(--c-text-2);
+        border-color: var(--c-border-card);
+    }
+    .transition-btn-todo:hover:not(:disabled) {
+        background: rgba(107, 114, 128, 0.16);
+    }
+
+    /* Light mode overrides for transition buttons */
+    :root.light .transition-btn-done {
+        background: rgba(22, 163, 74, 0.08);
+        color: #16a34a;
+        border-color: rgba(22, 163, 74, 0.25);
+    }
+    :root.light .transition-btn-done:hover:not(:disabled) {
+        background: rgba(22, 163, 74, 0.14);
+    }
+    :root.light .transition-btn-progress {
+        background: rgba(37, 99, 235, 0.08);
+        color: #2563eb;
+        border-color: rgba(37, 99, 235, 0.25);
+    }
+    :root.light .transition-btn-progress:hover:not(:disabled) {
+        background: rgba(37, 99, 235, 0.14);
+    }
+
+    /* Editable meta field hover highlight */
+    .meta-field-editable {
+        @apply rounded-md px-1 -mx-1 transition-colors cursor-pointer;
+    }
+    .meta-field-editable:hover {
+        background: var(--c-item-h);
+    }
+    .meta-field-editable.editing {
+        box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.4);
+        background: rgba(59, 130, 246, 0.05);
+    }
 }
 
 /* ── Light mode overrides for Tailwind gray utilities ─────────────── */
