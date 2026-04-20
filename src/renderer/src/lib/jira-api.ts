@@ -188,6 +188,31 @@ export const jiraApi = {
         return request("GET", `/project/${projectKey}/statuses`)
     },
 
+    // Správa stavů (vyžaduje admin práva v Jira)
+    getStatusesForProject(projectId: string): Promise<JiraStatus[]> {
+        return request<{ values: JiraStatus[] }>(
+            "GET", `/statuses/search?projectId=${projectId}&maxResults=200`
+        ).then(r => r.values)
+    },
+
+    createStatuses(
+        statuses: { name: string; statusCategory: "TODO" | "IN_PROGRESS" | "DONE"; description?: string }[],
+        projectId: string
+    ): Promise<JiraStatus[]> {
+        return request("POST", "/statuses", {
+            scope: { type: "PROJECT", project: { id: projectId } },
+            statuses,
+        })
+    },
+
+    updateStatuses(statuses: { id: string; name: string; statusCategory: "TODO" | "IN_PROGRESS" | "DONE"; description?: string }[]): Promise<void> {
+        return request("PUT", "/statuses", { statuses })
+    },
+
+    deleteStatus(id: string): Promise<void> {
+        return request("DELETE", `/statuses?id=${id}`)
+    },
+
     deleteIssueLink(linkId: string): Promise<void> {
         return request("DELETE", `/issueLink/${linkId}`)
     },
