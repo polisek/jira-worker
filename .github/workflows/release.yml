@@ -59,11 +59,11 @@ jobs:
       - name: Nastav verzi z tagu
         run: npm version ${{ needs.tag.outputs.new_tag }} --no-git-tag-version
       - name: Build .app bundle (arm64)
-        run: npm run build && npx electron-builder --mac --dir --arch arm64
+        run: npm run build && npx electron-builder --mac --dir --arm64
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
       - name: Build .app bundle (x64)
-        run: npx electron-builder --mac --dir --arch x64
+        run: npx electron-builder --mac --dir --x64
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
       - name: Vytvoř DMG (arm64)
