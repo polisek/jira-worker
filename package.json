@@ -50,15 +50,7 @@
             "icon": "resources/icon.ico"
         },
         "mac": {
-            "target": [
-                {
-                    "target": "dmg",
-                    "arch": [
-                        "x64",
-                        "arm64"
-                    ]
-                }
-            ],
+            "target": "dir",
             "icon": "resources/icon.icns",
             "category": "public.app-category.productivity",
             "identity": null

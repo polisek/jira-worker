@@ -7,9 +7,13 @@ import Store from "electron-store"
 const store = new Store()
 
 function createWindow(): void {
+    const savedBounds = store.get("windowBounds", { width: 1400, height: 900 }) as { width: number; height: number; x?: number; y?: number }
+    const wasMaximized = store.get("windowMaximized", false) as boolean
+
     const mainWindow = new BrowserWindow({
-        width: 1400,
-        height: 900,
+        width: savedBounds.width,
+        height: savedBounds.height,
+        ...(savedBounds.x !== undefined && savedBounds.y !== undefined ? { x: savedBounds.x, y: savedBounds.y } : {}),
         minWidth: 900,
         minHeight: 600,
         show: false,
@@ -22,8 +26,26 @@ function createWindow(): void {
         },
     })
 
+    mainWindow.on("resize", () => {
+        if (!mainWindow.isMaximized() && !mainWindow.isMinimized()) {
+            store.set("windowBounds", mainWindow.getBounds())
+        }
+    })
+    mainWindow.on("move", () => {
+        if (!mainWindow.isMaximized() && !mainWindow.isMinimized()) {
+            store.set("windowBounds", mainWindow.getBounds())
+        }
+    })
+    mainWindow.on("close", () => {
+        store.set("windowMaximized", mainWindow.isMaximized())
+        if (!mainWindow.isMaximized() && !mainWindow.isMinimized()) {
+            store.set("windowBounds", mainWindow.getBounds())
+        }
+    })
+
     mainWindow.on("ready-to-show", () => {
         mainWindow.show()
+        if (wasMaximized) mainWindow.maximize()
     })
 
     mainWindow.webContents.setWindowOpenHandler((details) => {
