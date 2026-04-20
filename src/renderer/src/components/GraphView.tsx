@@ -33,10 +33,11 @@ interface Props {
     prefs: AppPrefs
     onPrefsChange: (prefs: Partial<AppPrefs>) => void
     onIssueSelect: (issue: JiraIssue) => void
+    initialEpicKey?: string | null
 }
 
-function GraphCanvas({ selectedProject, prefs, onPrefsChange, onIssueSelect }: Props) {
-    const [selectedEpicKey, setSelectedEpicKey] = useState<string | null>(null)
+function GraphCanvas({ selectedProject, prefs, onPrefsChange, onIssueSelect, initialEpicKey }: Props) {
+    const [selectedEpicKey, setSelectedEpicKey] = useState<string | null>(initialEpicKey ?? null)
     const [epics, setEpics] = useState<JiraIssue[]>([])
     const [loadingEpics, setLoadingEpics] = useState(false)
     const [createTaskForEpicKey, setCreateTaskForEpicKey] = useState<string | null>(null)
@@ -79,13 +80,17 @@ function GraphCanvas({ selectedProject, prefs, onPrefsChange, onIssueSelect }: P
     useEffect(() => {
         if (!selectedProject) return
         setLoadingEpics(true)
-        setSelectedEpicKey(null)
+        setSelectedEpicKey(initialEpicKey ?? null)
         jiraApi
             .getEpics(selectedProject.key)
             .then(({ issues }) => setEpics(issues))
             .catch(() => setEpics([]))
             .finally(() => setLoadingEpics(false))
     }, [selectedProject])
+
+    useEffect(() => {
+        if (initialEpicKey) setSelectedEpicKey(initialEpicKey)
+    }, [initialEpicKey])
 
     useEffect(() => {
         return () => {

@@ -25,6 +25,7 @@ export default function App() {
     const [projects, setProjects] = useState<JiraProject[]>([])
     const pendingProjectKey = useRef<string | null>(null)
     const [selectedIssue, setSelectedIssue] = useState<JiraIssue | null>(null)
+    const [graphEpicKey, setGraphEpicKey] = useState<string | null>(null)
     const [searchQuery, setSearchQuery] = useState("")
     const [filter, setFilter] = useState<"all" | "mine" | "unassigned">(DEFAULTS.defaultFilter)
 
@@ -200,6 +201,7 @@ export default function App() {
                             prefs={prefs}
                             onPrefsChange={handlePrefsChange}
                             onIssueSelect={setSelectedIssue}
+                            initialEpicKey={graphEpicKey}
                         />
                     ) : (
                         <ListView
@@ -214,10 +216,13 @@ export default function App() {
 
                     {selectedIssue && (
                         <TaskDetail
-                            issue={selectedIssue}
+                            issueKey={selectedIssue.key}
                             prefs={prefs}
                             onClose={() => setSelectedIssue(null)}
-                            onUpdate={(updated) => setSelectedIssue(updated)}
+                            onOpenGraph={(epicKey) => {
+                                setGraphEpicKey(epicKey)
+                                setView("graph")
+                            }}
                         />
                     )}
                 </main>
