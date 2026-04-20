@@ -63,6 +63,7 @@ Ostatní hook soubory se přidávají dle potřeby.
 |---|---|
 | Hlavní (orchestrující) hook | `useFeatureName.ts` |
 | Načítání dat | `useFeatureName.data.ts` |
+| Těžká doménová logika (výpočty, transformace) | `useFeatureName.graph-data.ts` / `useFeatureName.<domain>.ts` |
 | Formulář | `useFeatureName.form.ts` |
 | API akce (mutace) | `useFeatureName.actions.ts` |
 | Kontroler (event handlery) | `useFeatureName.controller.ts` |
@@ -414,6 +415,58 @@ export const FeatureItemFormDefaults = (): FeatureItemForm => ({
 Factory funkci volej při inicializaci a resetu formuláře: `reset(FeatureItemFormDefaults())`.
 
 Referenční implementace: `apps/web/src/pages/clients/detail/components/insurance/hooks/useClientDetailInsurances.form.ts`
+
+---
+
+## Specializovaný hook pro těžkou doménovou logiku
+
+Pokud data hook obaluje komplexní logiku, která není přímé react-query volání (výpočet layoutu, sestavení grafu hran, transformace dat), extrahuj ji do **samostatného hooku s vlastním suffixem** místo přímého vložení do `.data.ts`.
+
+```
+hooks/
+  useFeatureName.data.ts          ← orchestruje sub-hooky, vrací DataProps
+  useFeatureName.graph-data.ts    ← výpočet nodů, hran, pozicování
+```
+
+`.data.ts` pak jen deleguje:
+
+```ts
+const graphData = useFeatureNameGraphData({ epicKey, projectKey })
+const epicsQuery = useEpicsQuery(projectKey)
+
+return {
+    epics: epicsQuery.data?.issues ?? [],
+    ...graphData,
+}
+```
+
+**Pravidlo:** Pokud logika v `.data.ts` přesahuje react-query hooky a jednoduché mappingy, je kandidátem na vlastní suffix.
+
+Referenční soubory: [`src/renderer/src/components/graph-view/hooks/useGraphView.data.ts`](../src/renderer/src/components/graph-view/hooks/useGraphView.data.ts), [`useGraphView.graph-data.ts`](../src/renderer/src/components/graph-view/hooks/useGraphView.graph-data.ts)
+
+---
+
+## Controller vlastní mutable state derivovaný z dat
+
+Pokud komponenta pracuje s interním mutable state (např. ReactFlow `nodes`/`edges`, DnD pozice), který je inicializován z dat ale dále měněn uživatelskou interakcí, patří tento state do **controlleru**, ne do dat.
+
+- `dataProps` přináší **init data** (z API / query)
+- Controller přebírá **ownership** a spravuje lokální kopii přes `useState` / `useXxxState`
+- Data hook zůstává read-only
+
+```ts
+// useFeatureName.controller.ts
+const useFeatureNameController = (dataProps: FeatureNameDataProps, ...) => {
+    const [nodes, setNodes, onNodesChange] = useNodesState(dataProps.nodes)  // init z dat
+    const [edges, setEdges, onEdgesChange] = useEdgesState(dataProps.edges)  // init z dat
+
+    // lokální mutace state bez zpětného zápisu do dataProps
+    useEffect(() => { setNodes(dataProps.nodes) }, [dataProps.nodes])
+    ...
+}
+```
+
+Referenční soubor: [`src/renderer/src/components/graph-view/hooks/useGraphView.controller.ts`](../src/renderer/src/components/graph-view/hooks/useGraphView.controller.ts)
 
 ---
 

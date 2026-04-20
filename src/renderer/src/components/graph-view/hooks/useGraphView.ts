@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import useGraphViewData, { type GraphViewDataProps } from "./useGraphView.data"
 import useGraphViewController, { type GraphViewControllerProps } from "./useGraphView.controller"
 import type { JiraProject, JiraIssue, AppPrefs } from "../../../types/jira"
@@ -28,14 +28,15 @@ const useGraphView = ({
     initialEpicKey,
 }: useGraphViewProps): GraphViewProps => {
     const [selectedEpicKey, setSelectedEpicKey] = useState<string | null>(initialEpicKey ?? null)
+    useEffect(() => {
+        if (initialEpicKey) setSelectedEpicKey(initialEpicKey)
+    }, [initialEpicKey])
 
     const dataProps = useGraphViewData({
         selectedProject,
         selectedEpicKey,
         prefs,
         onPrefsChange,
-        initialEpicKey,
-        onSelectedEpicKeyChange: setSelectedEpicKey,
     })
 
     const controllerProps = useGraphViewController(dataProps, onIssueSelect)

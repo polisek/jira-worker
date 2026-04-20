@@ -1,4 +1,3 @@
-import { useEffect } from "react"
 import { useGraphData } from "./useGraphView.graph-data"
 import { useEpicsQuery } from "../../../api/epics/get-epics"
 import type { JiraIssue, JiraProject, AppPrefs } from "../../../types/jira"
@@ -23,8 +22,6 @@ export type useGraphViewDataProps = {
     selectedEpicKey: string | null
     prefs: AppPrefs
     onPrefsChange: (prefs: Partial<AppPrefs>) => void
-    initialEpicKey?: string | null
-    onSelectedEpicKeyChange: (key: string | null) => void
 }
 
 const useGraphViewData = ({
@@ -32,8 +29,6 @@ const useGraphViewData = ({
     selectedEpicKey,
     prefs,
     onPrefsChange,
-    initialEpicKey,
-    onSelectedEpicKeyChange,
 }: useGraphViewDataProps): GraphViewDataProps => {
     const epicsQuery = useEpicsQuery(selectedProject?.key ?? "", {
         enabled: !!selectedProject,
@@ -45,10 +40,6 @@ const useGraphViewData = ({
         prefs,
         onPrefsChange,
     })
-
-    useEffect(() => {
-        if (initialEpicKey) onSelectedEpicKeyChange(initialEpicKey)
-    }, [initialEpicKey, onSelectedEpicKeyChange])
 
     return {
         epics: epicsQuery.data?.issues ?? [],
