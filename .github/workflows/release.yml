@@ -62,4 +62,45 @@ jobs:
         run: npm run build && npx electron-builder --mac --publish=always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CSC_IDENTITY: "-"
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      - name: Diagnostika DMG a .app
+        if: always()
+        run: |
+          echo "=== Obsah dist/ ==="
+          ls -lah dist/ || true
+          echo ""
+          echo "=== Hledám DMG soubory ==="
+          find dist -name "*.dmg" -maxdepth 2 || true
+          echo ""
+          DMG=$(find dist -maxdepth 2 -name "*.dmg" | head -1)
+          if [ -z "$DMG" ]; then
+            echo "ŽÁDNÝ DMG NENALEZEN"
+            exit 0
+          fi
+          echo "=== Testuju DMG: $DMG ==="
+          echo "Velikost: $(du -h "$DMG")"
+          echo "Quarantine před mountem: $(xattr -l "$DMG" || echo 'žádný')"
+          echo ""
+          echo "=== Verify DMG integritu ==="
+          hdiutil verify "$DMG" || echo "DMG JE POŠKOZENÉ"
+          echo ""
+          echo "=== Mount DMG ==="
+          hdiutil attach "$DMG" -nobrowse -noautoopen -mountpoint /tmp/jiratest
+          ls -lah /tmp/jiratest/
+          echo ""
+          APP=$(find /tmp/jiratest -maxdepth 2 -name "*.app" | head -1)
+          echo "=== Kontrola .app: $APP ==="
+          echo "Info.plist existuje: $([ -f "$APP/Contents/Info.plist" ] && echo ANO || echo NE)"
+          echo "Executable existuje: $(ls "$APP/Contents/MacOS/" 2>/dev/null)"
+          echo ""
+          echo "=== codesign ==="
+          codesign -dv --verbose=4 "$APP" 2>&1 || echo "nepodepsáno"
+          echo ""
+          echo "=== spctl (Gatekeeper) ==="
+          spctl --assess --verbose "$APP" 2>&1 || echo "Gatekeeper odmítl"
+          echo ""
+          echo "=== Zkus spustit app ==="
+          "$APP/Contents/MacOS/"* --version 2>&1 || echo "Spuštění selhalo (očekávané pro Electron bez X server)"
+          echo ""
+          hdiutil detach /tmp/jiratest || true
