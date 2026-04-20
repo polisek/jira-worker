@@ -58,41 +58,8 @@ jobs:
         run: npm ci
       - name: Nastav verzi z tagu
         run: npm version ${{ needs.tag.outputs.new_tag }} --no-git-tag-version
-      - name: Build .app bundle (arm64)
-        run: npm run build && npx electron-builder --mac --dir --arm64
-        env:
-          CSC_IDENTITY_AUTO_DISCOVERY: false
-      - name: Build .app bundle (x64)
-        run: npx electron-builder --mac --dir --x64
-        env:
-          CSC_IDENTITY_AUTO_DISCOVERY: false
-      - name: Instalace create-dmg
-        run: brew install create-dmg
-      - name: Vytvoř DMG (arm64)
-        run: |
-          create-dmg \
-            --volname "Jira Worker" \
-            --window-pos 200 120 \
-            --window-size 660 400 \
-            --icon-size 100 \
-            --app-drop-link 500 185 \
-            "Jira-Worker-${{ needs.tag.outputs.new_tag }}-arm64.dmg" \
-            "dist/mac-arm64/Jira Worker.app"
-      - name: Vytvoř DMG (x64)
-        run: |
-          create-dmg \
-            --volname "Jira Worker" \
-            --window-pos 200 120 \
-            --window-size 660 400 \
-            --icon-size 100 \
-            --app-drop-link 500 185 \
-            "Jira-Worker-${{ needs.tag.outputs.new_tag }}-x64.dmg" \
-            "dist/mac-x64/Jira Worker.app"
-      - name: Nahraj DMG do release
-        run: |
-          gh release upload ${{ needs.tag.outputs.new_tag }} \
-            "Jira-Worker-${{ needs.tag.outputs.new_tag }}-arm64.dmg" \
-            "Jira-Worker-${{ needs.tag.outputs.new_tag }}-x64.dmg" \
-            --clobber
+      - name: Build a release
+        run: npm run build && npx electron-builder --mac --publish=always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY: "-"

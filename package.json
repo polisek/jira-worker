@@ -50,10 +50,10 @@
             "icon": "resources/icon.ico"
         },
         "mac": {
-            "target": "dir",
+            "target": [{ "target": "dmg", "arch": ["x64", "arm64"] }],
             "icon": "resources/icon.icns",
             "category": "public.app-category.productivity",
-            "identity": null
+            "identity": "-"
         },
         "nsis": {
             "oneClick": false,
