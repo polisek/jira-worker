@@ -74,9 +74,12 @@ export const jiraApi = {
         )
     },
 
-    getIssueTime(key: string): Promise<{ timespent: number | null; timeestimate: number | null; timeoriginalestimate: number | null }> {
-        return request<{ fields: any }>("GET", `/issue/${key}?fields=timespent,timeestimate,timeoriginalestimate`)
-            .then((r) => r.fields)
+    getIssueTime(
+        key: string
+    ): Promise<{ timespent: number | null; timeestimate: number | null; timeoriginalestimate: number | null }> {
+        return request<{ fields: any }>("GET", `/issue/${key}?fields=timespent,timeestimate,timeoriginalestimate`).then(
+            (r) => r.fields
+        )
     },
 
     updateIssue(key: string, fields: Record<string, unknown>): Promise<void> {
@@ -194,9 +197,9 @@ export const jiraApi = {
 
     // Správa stavů (vyžaduje admin práva v Jira)
     getStatusesForProject(projectId: string): Promise<JiraStatus[]> {
-        return request<{ values: JiraStatus[] }>(
-            "GET", `/statuses/search?projectId=${projectId}&maxResults=200`
-        ).then(r => r.values)
+        return request<{ values: JiraStatus[] }>("GET", `/statuses/search?projectId=${projectId}&maxResults=200`).then(
+            (r) => r.values
+        )
     },
 
     createStatuses(
@@ -209,7 +212,9 @@ export const jiraApi = {
         })
     },
 
-    updateStatuses(statuses: { id: string; name: string; statusCategory: "TODO" | "IN_PROGRESS" | "DONE"; description?: string }[]): Promise<void> {
+    updateStatuses(
+        statuses: { id: string; name: string; statusCategory: "TODO" | "IN_PROGRESS" | "DONE"; description?: string }[]
+    ): Promise<void> {
         return request("PUT", "/statuses", { statuses })
     },
 
@@ -228,7 +233,7 @@ export const jiraApi = {
             inwardIssue: { key: inwardKey },
         })
         const issue = await request<JiraIssue>("GET", `/issue/${outwardKey}?fields=issuelinks`)
-        return issue.fields.issuelinks?.find(l => l.outwardIssue?.key === inwardKey)?.id ?? ""
+        return issue.fields.issuelinks?.find((l) => l.outwardIssue?.key === inwardKey)?.id ?? ""
     },
 
     getEpicIssues: async (epicKey: string, projectKey?: string): Promise<JiraIssue[]> => {
@@ -236,11 +241,27 @@ export const jiraApi = {
             ? `("Epic Link" = ${epicKey} OR parentEpic = ${epicKey} OR parent = ${epicKey}) AND project = "${projectKey}" ORDER BY created ASC`
             : `("Epic Link" = ${epicKey} OR parentEpic = ${epicKey} OR parent = ${epicKey}) ORDER BY created ASC`
 
-        const fields = ["summary", "status", "priority", "assignee", "issuetype", "issuelinks", "customfield_10014", "customfield_10016", "customfield_10020", "timeoriginalestimate", "parent", "subtasks"]
+        const fields = [
+            "summary",
+            "status",
+            "priority",
+            "assignee",
+            "issuetype",
+            "issuelinks",
+            "customfield_10014",
+            "customfield_10016",
+            "customfield_10020",
+            "timeoriginalestimate",
+            "parent",
+            "subtasks",
+        ]
 
         const [{ issues }, epic] = await Promise.all([
             request<{ issues: JiraIssue[] }>("POST", "/search/jql", { jql, maxResults: 100, fields }),
-            request<JiraIssue>("GET", `/issue/${epicKey}?fields=summary,status,priority,assignee,issuetype,issuelinks,subtasks,customfield_10020,timeoriginalestimate`),
+            request<JiraIssue>(
+                "GET",
+                `/issue/${epicKey}?fields=summary,status,priority,assignee,issuetype,issuelinks,subtasks,customfield_10020,timeoriginalestimate`
+            ),
         ])
 
         const allIssues = [epic, ...issues]
@@ -283,10 +304,15 @@ export const jiraApi = {
     },
 
     // Graph layout persistovaný přímo v Jira Issue Properties na epicu
-    getGraphLayout(epicKey: string): Promise<{ positions: Record<string, { x: number; y: number }>; updatedAt: number } | null> {
-        return request<{ key: string; value: { positions: Record<string, { x: number; y: number }>; updatedAt: number } }>(
-            "GET", `/issue/${epicKey}/properties/graph-layout`
-        ).then(r => r.value ?? null).catch(() => null)
+    getGraphLayout(
+        epicKey: string
+    ): Promise<{ positions: Record<string, { x: number; y: number }>; updatedAt: number } | null> {
+        return request<{
+            key: string
+            value: { positions: Record<string, { x: number; y: number }>; updatedAt: number }
+        }>("GET", `/issue/${epicKey}/properties/graph-layout`)
+            .then((r) => r.value ?? null)
+            .catch(() => null)
     },
 
     saveGraphLayout(epicKey: string, positions: Record<string, { x: number; y: number }>): Promise<void> {
