@@ -1,6 +1,12 @@
-// Bidirectional converter: ADF (Atlassian Document Format) ↔ TipTap JSON
+// ADF (Atlassian Document Format) utilities:
+//   - ADF → HTML (for display via dangerouslySetInnerHTML)
+//   - ADF ↔ TipTap JSON (for the rich-text editor)
 
-export type AdfMark = { type: string; attrs?: Record<string, unknown> }
+import type { ContentNode } from "../types/jira"
+
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+type AdfMark = { type: string; attrs?: Record<string, unknown> }
 
 export type AdfNode = {
     type: string
@@ -11,7 +17,7 @@ export type AdfNode = {
     marks?: AdfMark[]
 }
 
-export type TiptapMark = { type: string; attrs?: Record<string, unknown> }
+type TiptapMark = { type: string; attrs?: Record<string, unknown> }
 
 export type TiptapNode = {
     type: string
@@ -19,6 +25,109 @@ export type TiptapNode = {
     content?: TiptapNode[]
     attrs?: Record<string, unknown>
     marks?: TiptapMark[]
+}
+
+// ── ADF → HTML ────────────────────────────────────────────────────────────────
+
+// Jira base URL for media — set during initialisation
+let _jiraBaseUrl = ""
+export function setAdfJiraBaseUrl(url: string) {
+    _jiraBaseUrl = url.replace(/\/$/, "")
+}
+
+export function adfToHtml(node: ContentNode | null | undefined): string {
+    if (!node) return ""
+
+    switch (node.type) {
+        case "doc":
+            return node.content?.map(adfToHtml).join("") ?? ""
+        case "paragraph":
+            return `<p>${node.content?.map(adfToHtml).join("") ?? ""}</p>`
+        case "text": {
+            let text = node.text ?? ""
+            if ((node as AdfNode).marks) {
+                for (const mark of (node as AdfNode).marks!) {
+                    if (mark.type === "strong") text = `<strong>${text}</strong>`
+                    if (mark.type === "em") text = `<em>${text}</em>`
+                    if (mark.type === "code") text = `<code>${text}</code>`
+                    if (mark.type === "link") text = `<a href="${mark.attrs?.href}" target="_blank">${text}</a>`
+                }
+            }
+            return text
+        }
+        case "bulletList":
+            return `<ul>${node.content?.map(adfToHtml).join("") ?? ""}</ul>`
+        case "orderedList":
+            return `<ol>${node.content?.map(adfToHtml).join("") ?? ""}</ol>`
+        case "listItem":
+            return `<li>${node.content?.map(adfToHtml).join("") ?? ""}</li>`
+        case "taskList":
+            return `<ul data-type="taskList">${node.content?.map(adfToHtml).join("") ?? ""}</ul>`
+        case "taskItem": {
+            const checked = (node.attrs as AdfNode["attrs"])?.state === "DONE"
+            const content = node.content?.map(adfToHtml).join("") ?? ""
+            return `<li data-type="taskItem" data-checked="${checked}"><label><input type="checkbox" ${checked ? "checked" : ""} disabled /></label><div>${content}</div></li>`
+        }
+        case "heading": {
+            const level = node.attrs?.level ?? 2
+            return `<h${level}>${node.content?.map(adfToHtml).join("") ?? ""}</h${level}>`
+        }
+        case "codeBlock":
+            return `<pre><code>${node.content?.map(adfToHtml).join("") ?? ""}</code></pre>`
+        case "blockquote":
+            return `<blockquote>${node.content?.map(adfToHtml).join("") ?? ""}</blockquote>`
+        case "hardBreak":
+            return "<br/>"
+        case "rule":
+            return "<hr/>"
+
+        // Media nodes are rendered by AdfContent via IPC proxy
+        case "mediaSingle":
+        case "mediaGroup":
+        case "media":
+            return ""
+        case "inlineCard": {
+            const url = node.attrs?.url
+            if (url) return `<a href="${url}" target="_blank" class="adf-inline-card">${url}</a>`
+            return ""
+        }
+        case "blockCard": {
+            const url = node.attrs?.url
+            if (url) return `<div class="adf-block-card"><a href="${url}" target="_blank">${url}</a></div>`
+            return ""
+        }
+        case "emoji": {
+            const text = node.attrs?.text ?? node.attrs?.shortName ?? ""
+            return `<span class="adf-emoji">${text}</span>`
+        }
+        case "mention": {
+            const name = node.attrs?.text ?? ""
+            return `<span class="adf-mention">${name}</span>`
+        }
+
+        default:
+            return node.content?.map(adfToHtml).join("") ?? ""
+    }
+}
+
+// ── Date helpers ──────────────────────────────────────────────────────────────
+
+export function formatDate(iso: string): string {
+    return new Date(iso).toLocaleDateString("cs-CZ", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+    })
+}
+
+export function formatDateShort(iso: string): string {
+    return new Date(iso).toLocaleDateString("cs-CZ", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+    })
 }
 
 // ── ADF → TipTap ──────────────────────────────────────────────────────────────
@@ -32,7 +141,6 @@ function convertMark(mark: AdfMark): TiptapMark | null {
         case "strike":    return { type: "strike" }
         case "link":      return { type: "link", attrs: { href: mark.attrs?.href, target: "_blank" } }
         case "textColor": return { type: "textStyle", attrs: { color: mark.attrs?.color } }
-        // Unknown marks are silently dropped — TipTap would reject them
         default:          return null
     }
 }
@@ -75,7 +183,6 @@ export function adfToTiptap(node: AdfNode): TiptapNode | null {
             return { type: "taskList", content: mapContent(node.content) }
 
         case "taskItem": {
-            // ADF taskItem content is inline nodes; TipTap TaskItem requires a paragraph wrapper
             const inlineContent = mapContent(node.content)
             return {
                 type: "taskItem",
@@ -107,14 +214,12 @@ export function adfToTiptap(node: AdfNode): TiptapNode | null {
         case "rule":
             return { type: "horizontalRule" }
 
-        // ADF-specific inline nodes — convert to linked text
         case "inlineCard": {
             const url = (node.attrs?.url as string) ?? ""
             if (!url) return null
             return { type: "text", text: url, marks: [{ type: "link", attrs: { href: url, target: "_blank" } }] }
         }
 
-        // ADF-specific block nodes — convert to paragraph with link
         case "blockCard": {
             const url = (node.attrs?.url as string) ?? ""
             if (!url) return null
@@ -124,25 +229,21 @@ export function adfToTiptap(node: AdfNode): TiptapNode | null {
             }
         }
 
-        // Emoji → plain text
         case "emoji": {
             const text = (node.attrs?.text as string) ?? (node.attrs?.shortName as string) ?? ""
             return text ? { type: "text", text } : null
         }
 
-        // Mention → @name text
         case "mention": {
             const name = (node.attrs?.text as string) ?? (node.attrs?.displayName as string) ?? ""
             return name ? { type: "text", text: `@${name}` } : null
         }
 
-        // Media nodes — skip entirely (can't be represented in TipTap without media extension)
         case "mediaSingle":
         case "mediaGroup":
         case "media":
             return null
 
-        // Unknown node type — skip gracefully
         default:
             return null
     }
@@ -167,7 +268,7 @@ function convertMarkToAdf(mark: TiptapMark): AdfMark | null {
         case "link":      return { type: "link", attrs: { href: mark.attrs?.href } }
         case "textStyle":
             if (mark.attrs?.color) return { type: "textColor", attrs: { color: mark.attrs.color } }
-            return null // textStyle without color — skip
+            return null
         default:          return { type: mark.type, attrs: mark.attrs }
     }
 }
@@ -204,7 +305,6 @@ export function tiptapToAdf(node: TiptapNode): AdfNode {
             }
 
         case "taskItem": {
-            // TipTap wraps taskItem content in a paragraph; ADF expects inline nodes directly
             const rawContent = node.content ?? []
             const adfContent = rawContent.flatMap((child) => {
                 if (child.type === "paragraph") {

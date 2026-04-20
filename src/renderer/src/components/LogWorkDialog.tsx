@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react"
 import { X, ChevronLeft, ChevronRight, Plus, Loader2, AlertCircle } from "lucide-react"
-import { jiraApi } from "../lib/jira-api"
+import { jiraApi } from "../utils/jira-api"
 import type { JiraIssue, JiraUser } from "../types/jira"
 
 interface WorklogCell {

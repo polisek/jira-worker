@@ -22,7 +22,7 @@ import { ErrorMessage } from "./ErrorMessage"
 import { CreateIssueModal } from "./CreateIssueModal"
 import { IssueContextMenu } from "./IssueContextMenu"
 import { useGraphData, parentChildHandles } from "../hooks/useGraphData"
-import { jiraApi } from "../lib/jira-api"
+import { jiraApi } from "../utils/jira-api"
 import type { JiraProject, JiraIssue, AppPrefs } from "../types/jira"
 
 const NODE_TYPES = { issueNode: IssueNode }
@@ -86,7 +86,7 @@ function GraphCanvas({ selectedProject, prefs, onPrefsChange, onIssueSelect, ini
             .then(({ issues }) => setEpics(issues))
             .catch(() => setEpics([]))
             .finally(() => setLoadingEpics(false))
-    }, [selectedProject])
+    }, [initialEpicKey, selectedProject])
 
     useEffect(() => {
         if (initialEpicKey) setSelectedEpicKey(initialEpicKey)

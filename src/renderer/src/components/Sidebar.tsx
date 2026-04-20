@@ -16,7 +16,7 @@ import {
     GitBranch,
     Network,
 } from "lucide-react"
-import { jiraApi } from "../lib/jira-api"
+import { jiraApi } from "../utils/jira-api"
 import { RecentAssignments } from "./RecentAssignments"
 import type { NotificationState } from "../hooks/useNotifications"
 import type { JiraIssue, JiraProject, ViewMode } from "../types/jira"

@@ -4,7 +4,7 @@ import { useUpdateIssueMutation } from '../../../api/issues/update-issue'
 import { usePrioritiesQuery } from '../../../api/issues/get-priorities'
 import { UserPicker } from '../../UserPicker'
 import { StatusBadge } from '../../IssueBadges'
-import { formatDate } from '../../../lib/adf-to-text'
+import { formatDate } from '../../../utils/adf'
 import { DetailCard } from './DetailCard'
 import type { JiraIssue, JiraUser } from '../../../types/jira'
 

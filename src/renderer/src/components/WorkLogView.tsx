@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { ChevronLeft, ChevronRight, X, Search, Plus, Loader2, AlertCircle } from "lucide-react"
-import { jiraApi } from "../lib/jira-api"
+import { jiraApi } from "../utils/jira-api"
 import { useIssues } from "../hooks/useIssues"
 import type { JiraUser, JiraIssue, JiraProject, AppPrefs } from "../types/jira"
 

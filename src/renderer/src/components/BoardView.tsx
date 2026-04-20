@@ -6,7 +6,7 @@ import { useIssues } from "../hooks/useIssues"
 import { IssueCard } from "./IssueCard"
 import { CreateIssueModal } from "./CreateIssueModal"
 import { StatusManagerDialog } from "./StatusManagerDialog"
-import { jiraApi } from "../lib/jira-api"
+import { jiraApi } from "../utils/jira-api"
 import type { JiraIssue, JiraProject, JiraSprint, JiraStatus, AppPrefs } from "../types/jira"
 
 interface Props {

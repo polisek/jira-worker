@@ -1,5 +1,5 @@
 import { AdfImage } from './AdfImage'
-import { adfToHtml } from '../lib/adf-to-text'
+import { adfToHtml } from '../utils/adf'
 import type { ContentNode, JiraAttachment } from '../types/jira'
 
 interface Props {

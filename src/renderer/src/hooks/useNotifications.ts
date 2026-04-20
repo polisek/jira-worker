@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { jiraApi } from '../lib/jira-api'
+import { jiraApi } from '../utils/jira-api'
 import type { JiraIssue, AppPrefs } from '../types/jira'
 
 const SEEN_KEY = 'jw_seen_assignments'

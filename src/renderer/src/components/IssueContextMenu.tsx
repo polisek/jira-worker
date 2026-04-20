@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react"
-import { jiraApi } from "../lib/jira-api"
+import { jiraApi } from "../utils/jira-api"
 import { UserPicker } from "./UserPicker"
-import { fmtTime } from "../lib/time"
+import { fmtTime } from "../utils/time"
 import type { JiraIssue, JiraTransition, JiraUser, JiraSprint, JiraProject } from "../types/jira"
 
 interface Props {

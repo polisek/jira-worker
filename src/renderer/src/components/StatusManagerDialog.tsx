@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { X, Plus, Pencil, Trash2, RefreshCw, Check, AlertCircle } from "lucide-react"
-import { jiraApi } from "../lib/jira-api"
+import { jiraApi } from "../utils/jira-api"
 import type { JiraProject, JiraStatus } from "../types/jira"
 
 type StatusCategory = "TODO" | "IN_PROGRESS" | "DONE"

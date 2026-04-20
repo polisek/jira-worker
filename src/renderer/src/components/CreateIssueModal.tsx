@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { X, Plus, Loader, AlertCircle, CheckCircle } from 'lucide-react'
 import { ErrorMessage } from './ErrorMessage'
-import { jiraApi } from '../lib/jira-api'
+import { jiraApi } from '../utils/jira-api'
 import { UserPicker } from './UserPicker'
 import type { JiraProject, JiraUser, JiraIssueType, JiraSprint, JiraIssue } from '../types/jira'
 

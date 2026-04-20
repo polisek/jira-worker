@@ -1,5 +1,5 @@
 import { BaseEdge, EdgeLabelRenderer, getBezierPath, type EdgeProps } from "@xyflow/react"
-import { fmtTime } from "../lib/time"
+import { fmtTime } from "../utils/time"
 
 interface ParentEdgeData {
     originalEstimate?: number

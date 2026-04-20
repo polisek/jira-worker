@@ -4,7 +4,7 @@ import { useAddCommentAdfMutation } from '../../../api/comments/add-comment-adf'
 import { AdfContent } from '../../AdfContent'
 import { RichTextEditor, type RichTextEditorRef } from '../../RichTextEditor'
 import { DetailCard } from './DetailCard'
-import { formatDate } from '../../../lib/adf-to-text'
+import { formatDate } from '../../../utils/adf'
 import type { JiraIssue } from '../../../types/jira'
 
 interface Props {

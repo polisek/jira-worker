@@ -1,5 +1,5 @@
 import type { JiraIssue } from '../types/jira'
-import { formatDateShort } from '../lib/adf-to-text'
+import { formatDateShort } from '../utils/adf'
 import { Calendar, MessageSquare, GripVertical } from 'lucide-react'
 import { PriorityDot } from './IssueBadges'
 

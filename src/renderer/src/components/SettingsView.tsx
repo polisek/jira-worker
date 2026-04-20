@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { Save, Eye, EyeOff, CheckCircle, AlertCircle } from "lucide-react"
-import { jiraApi } from "../lib/jira-api"
+import { jiraApi } from "../utils/jira-api"
 import type { JiraSettings, AppPrefs } from "../types/jira"
 
 interface Props {

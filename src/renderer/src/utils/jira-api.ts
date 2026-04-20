@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import type {
     JiraIssue,
     JiraProject,
@@ -77,6 +78,7 @@ export const jiraApi = {
     getIssueTime(
         key: string
     ): Promise<{ timespent: number | null; timeestimate: number | null; timeoriginalestimate: number | null }> {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return request<{ fields: any }>("GET", `/issue/${key}?fields=timespent,timeestimate,timeoriginalestimate`).then(
             (r) => r.fields
         )

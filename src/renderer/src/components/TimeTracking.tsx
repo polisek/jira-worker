@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Clock, Loader, Pencil, Check, X } from 'lucide-react'
-import { jiraApi } from '../lib/jira-api'
-import { fmtTime } from '../lib/time'
+import { jiraApi } from '../utils/jira-api'
+import { fmtTime } from '../utils/time'
 import type { JiraIssue } from '../types/jira'
 
 interface TimeData {

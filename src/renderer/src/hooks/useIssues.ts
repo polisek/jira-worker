@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react"
-import { jiraApi } from "../lib/jira-api"
+import { jiraApi } from "../utils/jira-api"
 import type { JiraIssue, JiraProject, AppPrefs, AdvancedFilter } from "../types/jira"
 
 interface Options {

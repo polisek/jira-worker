@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react"
 import { ChevronLeft, Loader2, AlertCircle, RefreshCw } from "lucide-react"
-import { jiraApi } from "../lib/jira-api"
+import { jiraApi } from "../utils/jira-api"
 import type { JiraUser, JiraIssue, JiraProject, AppPrefs } from "../types/jira"
 
 // ── Types ─────────────────────────────────────────────────────────────────────

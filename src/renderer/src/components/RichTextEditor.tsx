@@ -20,7 +20,7 @@ import {
     Palette,
     X,
 } from "lucide-react"
-import { adfToTiptap, tiptapToAdf, type AdfNode, type TiptapNode } from "../utils/adf-converter"
+import { adfToTiptap, tiptapToAdf, type AdfNode, type TiptapNode } from "../utils/adf"
 
 const COLORS = [
     { label: "Červená",   value: "#ef4444" },

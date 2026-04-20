@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { X, Filter, Bookmark, FilterX } from "lucide-react"
-import { jiraApi } from "../lib/jira-api"
+import { jiraApi } from "../utils/jira-api"
 import { UserPicker } from "./UserPicker"
 import type { JiraProject, JiraUser, JiraStatus, AdvancedFilter, SavedFilter } from "../types/jira"
 

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Play, Pause, Square, Search, Trash2, Upload, Clock, X, Pencil, Check } from 'lucide-react'
-import { jiraApi } from '../lib/jira-api'
+import { jiraApi } from '../utils/jira-api'
 import type { TimeEntry, JiraIssue } from '../types/jira'
 
 // Parsuje "1h 30m" nebo "1:30:00" nebo "90" (minuty) na sekundy
