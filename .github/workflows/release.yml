@@ -66,16 +66,28 @@ jobs:
         run: npx electron-builder --mac --dir --x64
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
+      - name: Instalace create-dmg
+        run: brew install create-dmg
       - name: Vytvoř DMG (arm64)
-        uses: L-Super/create-dmg-actions@v1
-        with:
-          dmg_name: 'Jira-Worker-${{ needs.tag.outputs.new_tag }}-arm64'
-          src_dir: 'dist/mac-arm64/Jira Worker.app'
+        run: |
+          create-dmg \
+            --volname "Jira Worker" \
+            --window-pos 200 120 \
+            --window-size 660 400 \
+            --icon-size 100 \
+            --app-drop-link 500 185 \
+            "Jira-Worker-${{ needs.tag.outputs.new_tag }}-arm64.dmg" \
+            "dist/mac-arm64/Jira Worker.app"
       - name: Vytvoř DMG (x64)
-        uses: L-Super/create-dmg-actions@v1
-        with:
-          dmg_name: 'Jira-Worker-${{ needs.tag.outputs.new_tag }}-x64'
-          src_dir: 'dist/mac-x64/Jira Worker.app'
+        run: |
+          create-dmg \
+            --volname "Jira Worker" \
+            --window-pos 200 120 \
+            --window-size 660 400 \
+            --icon-size 100 \
+            --app-drop-link 500 185 \
+            "Jira-Worker-${{ needs.tag.outputs.new_tag }}-x64.dmg" \
+            "dist/mac-x64/Jira Worker.app"
       - name: Nahraj DMG do release
         run: |
           gh release upload ${{ needs.tag.outputs.new_tag }} \
