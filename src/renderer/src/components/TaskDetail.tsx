@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react"
-import { X, Send, RefreshCw, ChevronRight, Save, Settings2 } from "lucide-react"
+import { X, Send, RefreshCw, ChevronRight, Save, Settings2, Network } from "lucide-react"
 import { jiraApi } from "../lib/jira-api"
 import { adfToText, formatDate } from "../lib/adf-to-text"
 import { UserPicker } from "./UserPicker"
@@ -11,15 +11,15 @@ import { StatusManagerDialog } from "./StatusManagerDialog"
 import type { JiraIssue, JiraTransition, JiraUser, AppPrefs } from "../types/jira"
 
 interface Props {
-    issue: JiraIssue
+    issueKey: string
     prefs: AppPrefs
     onClose: () => void
-    onUpdate: (updated: JiraIssue) => void
+    onOpenGraph?: (epicKey: string) => void
 }
 
 
-export function TaskDetail({ issue, prefs, onClose, onUpdate }: Props) {
-    const [detail, setDetail] = useState<JiraIssue>(issue)
+export function TaskDetail({ issueKey, prefs, onClose, onOpenGraph }: Props) {
+    const [detail, setDetail] = useState<JiraIssue | null>(null)
     const [loading, setLoading] = useState(false)
     const [transitions, setTransitions] = useState<JiraTransition[]>([])
     const [comment, setComment] = useState("")
@@ -32,6 +32,7 @@ export function TaskDetail({ issue, prefs, onClose, onUpdate }: Props) {
     const [descDraft, setDescDraft] = useState("")
     const [savingDesc, setSavingDesc] = useState(false)
     const [navStack, setNavStack] = useState<JiraIssue[]>([])
+    const [parentChain, setParentChain] = useState<string[]>([])
     const [panelWidth, setPanelWidth] = useState(480)
     const [logWorkOpen, setLogWorkOpen] = useState(false)
     const [statusManagerOpen, setStatusManagerOpen] = useState(false)
@@ -60,15 +61,45 @@ export function TaskDetail({ issue, prefs, onClose, onUpdate }: Props) {
         [panelWidth]
     )
 
-    const loadDetail = async (key = detail.key) => {
+    const buildParentChain = async (issue: JiraIssue): Promise<string[]> => {
+        if (issue.fields.issuetype.name === "Epic") return []
+
+        // Classic Jira: customfield_10014 je přímý odkaz na epic
+        if (issue.fields.customfield_10014) {
+            const epicKey = issue.fields.customfield_10014
+            if (!issue.fields.parent || issue.fields.parent.key === epicKey) return [epicKey]
+            return [epicKey, issue.fields.parent.key]
+        }
+
+        if (!issue.fields.parent) return []
+
+        const parentKey = issue.fields.parent.key
+
+        // Parent je přímo Epic (next-gen nebo classic)
+        if (issue.fields.parent.fields.issuetype?.name === "Epic") return [parentKey]
+
+        // Parent je story/task — potřebujeme jeho rodiče (epic)
+        try {
+            const parentIssue = await jiraApi.getIssue(parentKey)
+            if (parentIssue.fields.customfield_10014) return [parentIssue.fields.customfield_10014, parentKey]
+            if (parentIssue.fields.parent) return [parentIssue.fields.parent.key, parentKey]
+        } catch {
+            // fallback: ukážeme aspoň přímého rodiče
+        }
+        return [parentKey]
+    }
+
+    const loadDetail = async (key?: string) => {
+        const targetKey = key ?? detail?.key ?? issueKey
         setLoading(true)
         try {
-            const [issueData, transData] = await Promise.all([jiraApi.getIssue(key), jiraApi.getTransitions(key)])
+            const [issueData, transData] = await Promise.all([jiraApi.getIssue(targetKey), jiraApi.getTransitions(targetKey)])
             setDetail(issueData)
             setTransitions(transData.transitions)
-            // onUpdate jen pro kořenový issue — jinak by změna selectedIssue v App.tsx
-            // resetovala navStack přes useEffect
-            if (key === issue.key) onUpdate(issueData)
+            // parentChain sestavujeme jen pro kořenový issue
+            if (targetKey === issueKey) {
+                buildParentChain(issueData).then(setParentChain)
+            }
         } catch (e: any) {
             setError(e.message)
         } finally {
@@ -78,19 +109,21 @@ export function TaskDetail({ issue, prefs, onClose, onUpdate }: Props) {
 
     useEffect(() => {
         setNavStack([])
-        loadDetail(issue.key)
+        setParentChain([])
+        setDetail(null)
+        loadDetail(issueKey)
         jiraApi
-            .getAssignableUsers(issue.key.split("-")[0])
+            .getAssignableUsers(issueKey.split("-")[0])
             .then(setAssignableUsers)
             .catch(() => {})
-    }, [issue.key])
+    }, [issueKey])
 
     const handleReassign = async (user: JiraUser | null) => {
+        if (!detail) return
         setReassigning(true)
         try {
             await jiraApi.assignIssue(detail.key, user?.accountId ?? null)
-            setDetail((prev) => ({ ...prev, fields: { ...prev.fields, assignee: user } }))
-            onUpdate({ ...detail, fields: { ...detail.fields, assignee: user } })
+            setDetail((prev) => prev ? { ...prev, fields: { ...prev.fields, assignee: user } } : prev)
         } catch (e: any) {
             setError(e.message)
         } finally {
@@ -99,11 +132,12 @@ export function TaskDetail({ issue, prefs, onClose, onUpdate }: Props) {
     }
 
     const handleTransition = async (transition: JiraTransition) => {
+        if (!detail) return
         setTransitioning(true)
         setError(null)
         try {
             await jiraApi.doTransition(detail.key, transition.id)
-            await loadDetail()
+            await loadDetail(detail.key)
         } catch (e: any) {
             setError(e.message)
         } finally {
@@ -112,6 +146,7 @@ export function TaskDetail({ issue, prefs, onClose, onUpdate }: Props) {
     }
 
     const handleNavigateTo = async (key: string) => {
+        if (!detail) return
         setError(null)
         try {
             const [targetIssue, transData] = await Promise.all([jiraApi.getIssue(key), jiraApi.getTransitions(key)])
@@ -137,11 +172,13 @@ export function TaskDetail({ issue, prefs, onClose, onUpdate }: Props) {
     }
 
     const handleDescEdit = () => {
+        if (!detail) return
         setDescDraft(adfToText(detail.fields.description as any))
         setEditingDesc(true)
     }
 
     const handleSaveDesc = async () => {
+        if (!detail) return
         setSavingDesc(true)
         setError(null)
         try {
@@ -154,8 +191,7 @@ export function TaskDetail({ issue, prefs, onClose, onUpdate }: Props) {
                 })),
             }
             await jiraApi.updateIssue(detail.key, { description: adf })
-            setDetail((prev) => ({ ...prev, fields: { ...prev.fields, description: adf as any } }))
-            onUpdate({ ...detail, fields: { ...detail.fields, description: adf as any } })
+            setDetail((prev) => prev ? { ...prev, fields: { ...prev.fields, description: adf as any } } : prev)
             setEditingDesc(false)
         } catch (e: any) {
             setError(e.message)
@@ -165,13 +201,13 @@ export function TaskDetail({ issue, prefs, onClose, onUpdate }: Props) {
     }
 
     const handleComment = async () => {
-        if (!comment.trim()) return
+        if (!comment.trim() || !detail) return
         setSendingComment(true)
         setError(null)
         try {
             await jiraApi.addComment(detail.key, comment.trim())
             setComment("")
-            await loadDetail()
+            await loadDetail(detail.key)
         } catch (e: any) {
             setError(e.message)
         } finally {
@@ -179,7 +215,32 @@ export function TaskDetail({ issue, prefs, onClose, onUpdate }: Props) {
         }
     }
 
-    const storyPoints = detail.fields.customfield_10016
+    const epicKey = detail
+        ? detail.fields.issuetype.name === "Epic"
+            ? detail.key
+            : (parentChain[0] ?? null)
+        : null
+
+    const storyPoints = detail?.fields.customfield_10016
+
+    if (!detail) {
+        return (
+            <div
+                className="detail-panel border-l border-gray-800 flex flex-col overflow-hidden shrink-0 relative items-center justify-center"
+                style={{ width: panelWidth }}
+            >
+                <div
+                    className="absolute left-0 top-0 h-full w-1 cursor-col-resize hover:bg-blue-500/40 transition-colors z-10"
+                    onMouseDown={onResizeMouseDown}
+                />
+                {error ? (
+                    <p className="text-red-400 text-sm px-4">{error}</p>
+                ) : (
+                    <RefreshCw className="w-5 h-5 animate-spin text-gray-500" />
+                )}
+            </div>
+        )
+    }
 
     return (
         <div
@@ -194,22 +255,33 @@ export function TaskDetail({ issue, prefs, onClose, onUpdate }: Props) {
             {/* Header */}
             <div className="flex items-start justify-between px-4 py-3 border-b border-gray-800 gap-2">
                 <div className="min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                        {navStack.length > 0 && (
-                            <>
-                                {navStack.map((item, i) => (
-                                    <span key={item.key} className="flex items-center gap-0.5">
-                                        <button
-                                            className="text-xs font-mono text-blue-400 hover:text-blue-300 hover:underline"
-                                            onClick={() => handleBreadcrumbNav(i)}
-                                        >
-                                            {item.key}
-                                        </button>
-                                        <ChevronRight className="w-3 h-3 text-gray-600" />
-                                    </span>
-                                ))}
-                            </>
-                        )}
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        {/* Hierarchie nadřazených issues (epic → story → …) */}
+                        {parentChain
+                            .filter((k) => !navStack.some((n) => n.key === k) && k !== detail.key)
+                            .map((k) => (
+                                <span key={k} className="flex items-center gap-0.5">
+                                    <button
+                                        className="text-xs font-mono text-blue-400 hover:text-blue-300 hover:underline"
+                                        onClick={() => handleNavigateTo(k)}
+                                    >
+                                        {k}
+                                    </button>
+                                    <ChevronRight className="w-3 h-3 text-gray-600" />
+                                </span>
+                            ))}
+                        {/* Navigační historie uvnitř panelu */}
+                        {navStack.map((item, i) => (
+                            <span key={item.key} className="flex items-center gap-0.5">
+                                <button
+                                    className="text-xs font-mono text-blue-400 hover:text-blue-300 hover:underline"
+                                    onClick={() => handleBreadcrumbNav(i)}
+                                >
+                                    {item.key}
+                                </button>
+                                <ChevronRight className="w-3 h-3 text-gray-600" />
+                            </span>
+                        ))}
                         <div className="flex items-center gap-2">
                             <img src={detail.fields.issuetype.iconUrl} alt="" className="w-4 h-4 shrink-0" />
                             <span className="text-xs font-mono text-gray-400">{detail.key}</span>
@@ -219,7 +291,16 @@ export function TaskDetail({ issue, prefs, onClose, onUpdate }: Props) {
                     <h2 className="text-sm font-semibold text-gray-100 leading-snug">{detail.fields.summary}</h2>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
-                    <button onClick={() => loadDetail()} className="btn-icon" disabled={loading}>
+                    {epicKey && onOpenGraph && (
+                        <button
+                            onClick={() => onOpenGraph(epicKey)}
+                            className="btn-icon"
+                            title={`Otevřít graph pro epic ${epicKey}`}
+                        >
+                            <Network className="w-3.5 h-3.5" />
+                        </button>
+                    )}
+                    <button onClick={() => loadDetail(detail.key)} className="btn-icon" disabled={loading}>
                         <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
                     </button>
                     <button onClick={onClose} className="btn-icon">
@@ -312,11 +393,6 @@ export function TaskDetail({ issue, prefs, onClose, onUpdate }: Props) {
                         </MetaItem>
                     )}
 
-                    {detail.fields.parent && (
-                        <MetaItem label="Rodičovský task">
-                            <span className="text-xs text-gray-400 font-mono">{detail.fields.parent.key}</span>
-                        </MetaItem>
-                    )}
                 </div>
 
                 {/* Labels */}
@@ -334,7 +410,7 @@ export function TaskDetail({ issue, prefs, onClose, onUpdate }: Props) {
                 )}
 
                 {/* Čas */}
-                <TimeTracking issue={detail} onLogWork={() => setLogWorkOpen(true)} onOriginalEdited={loadDetail} />
+                <TimeTracking issue={detail} onLogWork={() => setLogWorkOpen(true)} onOriginalEdited={() => loadDetail(detail.key)} />
 
                 {/* Description */}
                 <div className="px-4 py-3 border-b border-gray-800">
@@ -479,7 +555,7 @@ export function TaskDetail({ issue, prefs, onClose, onUpdate }: Props) {
                     issue={detail}
                     dailyWorkHours={prefs.dailyWorkHours}
                     onClose={() => setLogWorkOpen(false)}
-                    onLogged={() => loadDetail()}
+                    onLogged={() => loadDetail(detail.key)}
                 />
             )}
 

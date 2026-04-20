@@ -70,12 +70,12 @@ export function IssueNode({ data }: NodeProps) {
                         </span>
                     )}
                     {issue.fields.assignee && (
-                        <div
-                            className="w-5 h-5 rounded-full bg-blue-500/20 text-blue-600 text-[8px] font-bold flex items-center justify-center shrink-0"
+                        <img
+                            src={issue.fields.assignee.avatarUrls["48x48"]}
+                            alt={issue.fields.assignee.displayName}
                             title={issue.fields.assignee.displayName}
-                        >
-                            {issue.fields.assignee.displayName.slice(0, 2).toUpperCase()}
-                        </div>
+                            className="w-5 h-5 rounded-full shrink-0"
+                        />
                     )}
                 </div>
             </div>

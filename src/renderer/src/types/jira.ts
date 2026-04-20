@@ -108,7 +108,7 @@ export interface JiraIssue {
             total: number
         }
         subtasks: JiraIssue[]
-        parent?: { key: string; fields: { summary: string; status: JiraStatus } }
+        parent?: { key: string; fields: { summary: string; status: JiraStatus; issuetype: JiraIssueType } }
         timeestimate: number | null
         timespent: number | null
         timeoriginalestimate: number | null
