@@ -146,8 +146,8 @@ function DayPopup({
             setTimeInput("")
             setNote("")
             setSearchQuery("")
-        } catch (e: any) {
-            setSubmitError(e.message ?? "Chyba při logování")
+        } catch (e) {
+            setSubmitError((e as Error).message ?? "Chyba při logování")
         } finally {
             setSubmitting(false)
         }
@@ -355,63 +355,60 @@ export function WorkLogView({ prefs, selectedProject }: Props) {
             .catch(() => {})
     }, [])
 
+    const loadWorklogs = useCallback(async (user: JiraUser, monthStart: Date, project: JiraProject | null) => {
+        setLoading(true)
+        setError(null)
+        const year = monthStart.getFullYear()
+        const month = monthStart.getMonth()
+        const start = toDateStr(new Date(year, month, 1))
+        const end = toDateStr(new Date(year, month + 1, 0))
+        const startMs = new Date(year, month, 1).getTime()
+
+        try {
+            const projectClause = project ? ` AND project = "${project.key}"` : ""
+            const jql = `worklogAuthor = "${user.accountId}" AND worklogDate >= "${start}" AND worklogDate <= "${end}"${projectClause}`
+            const { issues } = await jiraApi.searchIssues(jql, 200)
+
+            const map: WorklogMap = {}
+            await Promise.all(
+                issues.map(async (issue) => {
+                    try {
+                        const { worklogs } = await jiraApi.getIssueWorklogs(issue.key, startMs)
+                        for (const wl of worklogs) {
+                            if (wl.author.accountId !== user.accountId) continue
+                            const dateStr = wl.started.slice(0, 10)
+                            if (dateStr < start || dateStr > end) continue
+                            if (!map[dateStr]) map[dateStr] = []
+                            // Merge same issue on same day
+                            const existing = map[dateStr].find((c) => c.issueKey === issue.key)
+                            if (existing) {
+                                existing.timeSpentSeconds += wl.timeSpentSeconds
+                            } else {
+                                map[dateStr].push({
+                                    issueKey: issue.key,
+                                    issueSummary: issue.fields.summary,
+                                    timeSpentSeconds: wl.timeSpentSeconds,
+                                })
+                            }
+                        }
+                    } catch {
+                        // skip issue if worklog fetch fails
+                    }
+                })
+            )
+            setWorklogMap(map)
+        } catch (e) {
+            setError((e as Error).message ?? "Chyba při načítání worklogů")
+        } finally {
+            setLoading(false)
+        }
+    }, [])
+
     // Load worklogs when month, user or project changes
     useEffect(() => {
         if (!selectedUser) return
         loadWorklogs(selectedUser, currentMonth, selectedProject)
-    }, [selectedUser, currentMonth, selectedProject])
-
-    const loadWorklogs = useCallback(
-        async (user: JiraUser, monthStart: Date, project: JiraProject | null) => {
-            setLoading(true)
-            setError(null)
-            const year = monthStart.getFullYear()
-            const month = monthStart.getMonth()
-            const start = toDateStr(new Date(year, month, 1))
-            const end = toDateStr(new Date(year, month + 1, 0))
-            const startMs = new Date(year, month, 1).getTime()
-
-            try {
-                const projectClause = project ? ` AND project = "${project.key}"` : ""
-                const jql = `worklogAuthor = "${user.accountId}" AND worklogDate >= "${start}" AND worklogDate <= "${end}"${projectClause}`
-                const { issues } = await jiraApi.searchIssues(jql, 200)
-
-                const map: WorklogMap = {}
-                await Promise.all(
-                    issues.map(async (issue) => {
-                        try {
-                            const { worklogs } = await jiraApi.getIssueWorklogs(issue.key, startMs)
-                            for (const wl of worklogs) {
-                                if (wl.author.accountId !== user.accountId) continue
-                                const dateStr = wl.started.slice(0, 10)
-                                if (dateStr < start || dateStr > end) continue
-                                if (!map[dateStr]) map[dateStr] = []
-                                // Merge same issue on same day
-                                const existing = map[dateStr].find((c) => c.issueKey === issue.key)
-                                if (existing) {
-                                    existing.timeSpentSeconds += wl.timeSpentSeconds
-                                } else {
-                                    map[dateStr].push({
-                                        issueKey: issue.key,
-                                        issueSummary: issue.fields.summary,
-                                        timeSpentSeconds: wl.timeSpentSeconds,
-                                    })
-                                }
-                            }
-                        } catch {
-                            // skip issue if worklog fetch fails
-                        }
-                    })
-                )
-                setWorklogMap(map)
-            } catch (e: any) {
-                setError(e.message ?? "Chyba při načítání worklogů")
-            } finally {
-                setLoading(false)
-            }
-        },
-        [selectedProject]
-    )
+    }, [selectedUser, currentMonth, selectedProject, loadWorklogs])
 
     const handleUserSearch = (q: string) => {
         setUserSearch(q)
