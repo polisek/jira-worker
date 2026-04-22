@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { X, Plus, Loader, AlertCircle, CheckCircle } from 'lucide-react'
 import { ErrorMessage } from './ErrorMessage'
 import { jiraApi } from '../utils/jira-api'
 import { UserPicker } from './UserPicker'
+import { RichTextEditor, type RichTextEditorRef } from './RichTextEditor'
 import type { JiraProject, JiraUser, JiraIssueType, JiraSprint, JiraIssue } from '../types/jira'
 
 interface Props {
@@ -36,7 +37,7 @@ export function CreateIssueModal({ projects, defaultProject, onClose, onCreated,
 
   // Form fields
   const [summary, setSummary] = useState('')
-  const [description, setDescription] = useState('')
+  const descriptionRef = useRef<RichTextEditorRef>(null)
   const [issueType, setIssueType] = useState<JiraIssueType | null>(null)
   const [priority, setPriority] = useState('Medium')
   const [assignee, setAssignee] = useState<JiraUser | null>(null)
@@ -138,11 +139,9 @@ export function CreateIssueModal({ projects, defaultProject, onClose, onCreated,
       priority: { name: priority }
     }
 
-    if (description.trim()) {
-      fields.description = {
-        type: 'doc', version: 1,
-        content: [{ type: 'paragraph', content: [{ type: 'text', text: description.trim() }] }]
-      }
+    const descAdf = descriptionRef.current?.getAdf()
+    if (descAdf && !descriptionRef.current?.isEmpty()) {
+      fields.description = descAdf
     }
     if (assignee) fields.assignee = { accountId: assignee.accountId }
     if (sprint) fields.customfield_10020 = sprint.id
@@ -283,12 +282,10 @@ export function CreateIssueModal({ projects, defaultProject, onClose, onCreated,
 
           {/* Description */}
           <Field label="Popis">
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+            <RichTextEditor
+              ref={descriptionRef}
               placeholder="Podrobnější popis, kroky k reprodukci, poznámky..."
-              rows={4}
-              className="input w-full resize-none"
+              minHeight={120}
             />
           </Field>
 

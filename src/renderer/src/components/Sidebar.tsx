@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import {
     Kanban,
     List,
@@ -60,18 +60,19 @@ export function Sidebar({
     const [editMode, setEditMode] = useState(false)
     const [localHidden, setLocalHidden] = useState<Set<string>>(new Set())
 
-    const loadProjects = async () => {
+    const loadProjects = useCallback(async () => {
         setProjectsLoading(true)
         setProjectsError(null)
         try {
             const data = await jiraApi.getProjects()
             setProjects(data)
-        } catch (e: any) {
-            setProjectsError(e.message)
+        } catch (e) {
+            setProjectsError((e as Error).message)
         } finally {
             setProjectsLoading(false)
         }
-    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
 
     useEffect(() => {
         loadProjects()

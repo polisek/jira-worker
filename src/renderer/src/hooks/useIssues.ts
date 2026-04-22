@@ -37,7 +37,13 @@ export function useIssues({ selectedProject, filter, searchQuery, prefs, sprint,
         }
 
         if (searchQuery.trim()) {
-            parts.push(`(summary ~ "${searchQuery.trim()}" OR description ~ "${searchQuery.trim()}")`)
+            const q = searchQuery.trim()
+            const isIssueKey = /^[A-Za-z]+-\d+$/.test(q)
+            if (isIssueKey) {
+                parts.push(`(key = "${q}" OR summary ~ "${q}")`)
+            } else {
+                parts.push(`(summary ~ "${q}" OR description ~ "${q}")`)
+            }
         }
 
         // Sprint filtr
