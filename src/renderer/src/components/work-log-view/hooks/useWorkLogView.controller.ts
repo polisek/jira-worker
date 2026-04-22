@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react"
+import { useState, useRef, useEffect } from "react"
 import { jiraApi } from "../../../utils/jira-api"
 import type { JiraUser } from "../../../types/jira"
 import { toDateStr } from "../utils"
@@ -43,16 +43,10 @@ const useWorkLogViewController = (): WorkLogViewControllerProps => {
             .catch(() => {})
     }, [])
 
-    const prevMonth = useCallback(
-        () => setCurrentMonth((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1)),
-        []
-    )
-    const nextMonth = useCallback(
-        () => setCurrentMonth((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1)),
-        []
-    )
+    const prevMonth = () => setCurrentMonth((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1))
+    const nextMonth = () => setCurrentMonth((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1))
 
-    const handleUserSearch = useCallback((q: string) => {
+    const handleUserSearch = (q: string) => {
         setUserSearch(q)
         if (userSearchRef.current) clearTimeout(userSearchRef.current)
         if (!q.trim()) {
@@ -67,18 +61,18 @@ const useWorkLogViewController = (): WorkLogViewControllerProps => {
                 setUserResults([])
             }
         }, 400)
-    }, [])
+    }
 
-    const selectUser = useCallback((u: JiraUser) => {
+    const selectUser = (u: JiraUser) => {
         setSelectedUser(u)
         setUserDropdownOpen(false)
         setUserSearch("")
         setUserResults([])
-    }, [])
+    }
 
     return {
         currentMonth,
-        myself,
+        myself: myself ?? null,
         selectedUser,
         userSearch,
         userResults,
