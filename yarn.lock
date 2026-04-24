@@ -586,6 +586,11 @@
   resolved "https://registry.npmjs.org/@pkgjs/parseargs/-/parseargs-0.11.0.tgz"
   integrity sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==
 
+"@popperjs/core@^2.9.0":
+  version "2.11.8"
+  resolved "https://registry.yarnpkg.com/@popperjs/core/-/core-2.11.8.tgz#6b79032e760a0899cd4204710beede972a3a185f"
+  integrity sha512-P1st0aksCrn9sGZhp8GMYwBnQsbvAWsZAX44oXNNvLHGqAOcoVxmjZiohstwQ7SqKnbR47akdNi+uleWD8+g6A==
+
 "@rolldown/pluginutils@1.0.0-beta.27":
   version "1.0.0-beta.27"
   resolved "https://registry.npmjs.org/@rolldown/pluginutils/-/pluginutils-1.0.0-beta.27.tgz"
@@ -856,6 +861,11 @@
   resolved "https://registry.npmjs.org/@tiptap/extension-list/-/extension-list-3.22.4.tgz"
   integrity sha512-Xe8UFvvHmyp/c/TJsFwlwU9CWACYbBirNsluJ3U1+H8BTu1wqdrT/AXR5uIXeyCl5kiWKgX5q71eHWbYFOrqrg==
 
+"@tiptap/extension-mention@^3.22.4":
+  version "3.22.4"
+  resolved "https://registry.yarnpkg.com/@tiptap/extension-mention/-/extension-mention-3.22.4.tgz#42bf8a5170e2988e367c5eb2ca6b601894bb1aaa"
+  integrity sha512-ZUJ1gCZlH+JGTAT7lVpZjcMAzvIi9hXIyBjOmjL+737NlF+Cfgo+fjHqFQgOSsiO9LEyc3ZMSclmbzII1Jy6IQ==
+
 "@tiptap/extension-ordered-list@^3.22.4":
   version "3.22.4"
   resolved "https://registry.npmjs.org/@tiptap/extension-ordered-list/-/extension-ordered-list-3.22.4.tgz"
@@ -965,6 +975,11 @@
     "@tiptap/extension-underline" "^3.22.4"
     "@tiptap/extensions" "^3.22.4"
     "@tiptap/pm" "^3.22.4"
+
+"@tiptap/suggestion@^3.22.4":
+  version "3.22.4"
+  resolved "https://registry.yarnpkg.com/@tiptap/suggestion/-/suggestion-3.22.4.tgz#ef39840763245aa67c87985903ef62db365cde89"
+  integrity sha512-1buvLZemITTeKmPf2wGFWvvhRFKjdQ+JgMqc67xBraOKeDd8wQi1e2XlhCYAtlVMm5f6j+qlLC/MvwuHI2jHeQ==
 
 "@tootallnate/once@2":
   version "2.0.0"
@@ -4811,6 +4826,13 @@ tinyglobby@^0.2.11, tinyglobby@^0.2.15:
   dependencies:
     fdir "^6.5.0"
     picomatch "^4.0.4"
+
+tippy.js@^6.3.7:
+  version "6.3.7"
+  resolved "https://registry.yarnpkg.com/tippy.js/-/tippy.js-6.3.7.tgz#8ccfb651d642010ed9a32ff29b0e9e19c5b8c61c"
+  integrity sha512-E1d3oP2emgJ9dRQZdf3Kkn0qJgI6ZLpyS5z6ZkY1DF3kaQaBsGZsndEpHwx+eC+tYM41HaSNvNtLx8tU57FzTQ==
+  dependencies:
+    "@popperjs/core" "^2.9.0"
 
 tmp-promise@^3.0.2:
   version "3.0.3"

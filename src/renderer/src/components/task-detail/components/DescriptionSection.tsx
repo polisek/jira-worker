@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Save, RefreshCw, Pencil, Maximize2, X } from 'lucide-react'
 import { useUpdateIssueMutation } from '../../../api/issues/update-issue'
 import { AdfContent } from '../../adf/AdfContent'
-import { RichTextEditor, type RichTextEditorRef } from '../../RichTextEditor'
+import { RichTextEditor, type RichTextEditorRef } from '../../rich-text-editor'
 import { DetailCard } from './DetailCard'
 import type { JiraIssue } from '../../../types/jira'
 
