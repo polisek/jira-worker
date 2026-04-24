@@ -7,6 +7,7 @@ import type { AppPrefs } from '../../../types/jira'
 export type useTaskDetailProps = {
     issueKey: string
     prefs: AppPrefs
+    baseUrl?: string
     onClose: () => void
     onOpenGraph?: (epicKey: string) => void
 }
@@ -31,6 +32,7 @@ export type DialogStateProps = {
 export type TaskDetailProps = {
     issueKey: string
     prefs: AppPrefs
+    baseUrl?: string
     onClose: () => void
     onOpenGraph?: (epicKey: string) => void
     dataProps: TaskDetailDataProps
@@ -39,7 +41,7 @@ export type TaskDetailProps = {
     dialogProps: DialogStateProps
 }
 
-const useTaskDetail = ({ issueKey, prefs, onClose, onOpenGraph }: useTaskDetailProps): TaskDetailProps => {
+const useTaskDetail = ({ issueKey, prefs, baseUrl, onClose, onOpenGraph }: useTaskDetailProps): TaskDetailProps => {
     const controllerProps = useTaskDetailController(issueKey)
     const dataProps = useTaskDetailData(issueKey, controllerProps.currentKey)
 
@@ -78,6 +80,7 @@ const useTaskDetail = ({ issueKey, prefs, onClose, onOpenGraph }: useTaskDetailP
     return {
         issueKey,
         prefs,
+        baseUrl,
         onClose,
         onOpenGraph,
         dataProps,

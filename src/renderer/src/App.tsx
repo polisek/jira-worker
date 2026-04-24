@@ -218,6 +218,7 @@ export default function App() {
                         <TaskDetail
                             issueKey={selectedIssue.key}
                             prefs={prefs}
+                            baseUrl={settings?.baseUrl}
                             onClose={() => setSelectedIssue(null)}
                             onOpenGraph={(epicKey) => {
                                 setGraphEpicKey(epicKey)

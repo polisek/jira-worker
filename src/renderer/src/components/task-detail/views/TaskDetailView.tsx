@@ -1,4 +1,4 @@
-import { X, RefreshCw, ChevronRight, Network, Save } from 'lucide-react'
+import { X, RefreshCw, ChevronRight, Network, Save, ExternalLink } from 'lucide-react'
 import { StatusBadge } from '../../IssueBadges'
 import { LogWorkDialog } from '../../LogWorkDialog'
 import { StatusManagerDialog } from '../../StatusManagerDialog'
@@ -12,6 +12,7 @@ import type { TaskDetailProps } from '../hooks/useTaskDetail'
 function TaskDetailView({
     issueKey,
     prefs,
+    baseUrl,
     onClose,
     onOpenGraph,
     dataProps,
@@ -163,6 +164,17 @@ function TaskDetailView({
 
                 {/* Action buttons */}
                 <div className="flex items-center gap-1 shrink-0">
+                    {baseUrl && (
+                        <a
+                            href={`${baseUrl.replace(/\/$/, '')}/browse/${issue.key}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="btn-icon"
+                            title={`Otevřít ${issue.key} v Jira`}
+                        >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                    )}
                     {epicKey && onOpenGraph && (
                         <button
                             onClick={() => onOpenGraph(epicKey)}
