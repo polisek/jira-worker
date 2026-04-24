@@ -470,6 +470,69 @@ Referenční soubor: [`src/renderer/src/components/graph-view/hooks/useGraphView
 
 ---
 
+## Komponenty s `forwardRef` — MVP bez `wrap()`
+
+Standardní `wrap()` utility **nefunguje pro komponenty vystavující imperativní ref** (`forwardRef`). Pro takové komponenty se používá přímé volání hooku uvnitř `forwardRef` callbacku:
+
+```tsx
+// index.tsx — forwardRef varianta
+export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>((props, ref) => {
+    const viewProps = useRichTextEditorHook(props, ref)
+    return <RichTextEditorView {...viewProps} />
+})
+```
+
+Hook přijímá `(props, ref: React.ForwardedRef<Ref>)` a volá `useImperativeHandle` interně. View je čistě prezentační — o ref neví nic.
+
+```ts
+// hooks/useRichTextEditor.ts
+export function useRichTextEditorHook(
+    props: RichTextEditorProps,
+    ref: React.ForwardedRef<RichTextEditorRef>
+): RichTextEditorViewProps {
+    // ...
+    useImperativeHandle(ref, () => ({ getAdf, isEmpty, clear, focus }))
+    return { editor, ... }
+}
+```
+
+Referenční soubory: [`src/renderer/src/components/rich-text-editor/index.tsx`](../src/renderer/src/components/rich-text-editor/index.tsx), [`hooks/useRichTextEditor.ts`](../src/renderer/src/components/rich-text-editor/hooks/useRichTextEditor.ts)
+
+---
+
+## Statická konfigurace extension na module scope
+
+Konfigurace pro externí knihovny (Tiptap extensions, aj.) která **neobsahuje React state ani hooky** patří na **module scope** — mimo tělo hooku.
+
+**Špatně** — `useRef({}).current` je antipattern, React 18+ hlásí `Cannot access ref during render`:
+
+```ts
+// ❌ Špatně
+const config = useRef({ items: ..., render: ... }).current
+```
+
+**Správně** — statická konstanta na module scope:
+
+```ts
+// ✅ Správně — module scope
+const mentionSuggestion = {
+    items: async ({ query }) => { ... },
+    render: () => { ... },
+}
+
+export function useMyEditorHook(props, ref) {
+    const editor = useEditor({
+        extensions: [Mention.configure({ suggestion: mentionSuggestion })],
+    })
+}
+```
+
+Pravidlo: pokud konfigurace nepoužívá žádný hook ani closure přes komponentní state, vždy ji vynes mimo hook.
+
+Referenční soubor: [`src/renderer/src/components/rich-text-editor/hooks/useRichTextEditor.ts`](../src/renderer/src/components/rich-text-editor/hooks/useRichTextEditor.ts)
+
+---
+
 ## Project-specific vzory
 
 Jira Worker-specific vzory (DetailCard, section components, transition buttons, double-click editing) jsou zdokumentovány v **[docs/MVP-vzory.md](./MVP-vzory.md)**.

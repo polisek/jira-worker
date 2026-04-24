@@ -185,3 +185,32 @@ Pokud sekce má header, lze přidat i ikonu `Pencil` jako `action` prop DetailCa
 ```
 
 Referenční soubory: [`DescriptionSection.tsx`](../src/renderer/src/components/task-detail/components/DescriptionSection.tsx), [`IssueInfoSection.tsx`](../src/renderer/src/components/task-detail/components/IssueInfoSection.tsx)
+
+---
+
+## Tiptap inline node extensions — styling přes `globals.css`
+
+Tiptap extension přidávající inline node (např. mention) definuje CSS třídu přes `HTMLAttributes` a styluje se v `@layer components` v `globals.css`.
+
+```ts
+// hooks/useMyEditor.ts
+Mention.configure({
+    HTMLAttributes: { class: "mention" },  // třída vložena do DOM
+    renderText: ({ node }) => `@${node.attrs.label}`,
+})
+```
+
+```css
+/* globals.css — @layer components */
+.mention {
+    @apply inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-blue-400 font-medium text-sm;
+    background: rgba(59, 130, 246, 0.12);
+    border: 1px solid rgba(59, 130, 246, 0.25);
+    white-space: nowrap;
+    cursor: default;
+}
+```
+
+Stejný vzor platí pro jakýkoli budoucí inline node (emoji picker, issue link chip atd.) — vždy definovat třídu v extension, styl v `globals.css`.
+
+Referenční soubor: [`src/renderer/src/styles/globals.css`](../src/renderer/src/styles/globals.css)
