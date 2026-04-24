@@ -411,8 +411,23 @@
         @apply rounded-lg p-2 my-2 text-xs;
     }
 
+    /* ADF mention (read-only display) */
     .adf-mention {
         @apply text-blue-400 font-medium;
+    }
+
+    /* Tiptap mention node (editor) */
+    .mention {
+        @apply inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-blue-400 font-medium text-sm;
+        background: rgba(59, 130, 246, 0.12);
+        border: 1px solid rgba(59, 130, 246, 0.25);
+        white-space: nowrap;
+        cursor: default;
+    }
+
+    /* Mention suggestion dropdown */
+    .mention-dropdown {
+        z-index: 9999;
     }
 
     .adf-emoji {

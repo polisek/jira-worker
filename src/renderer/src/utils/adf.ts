@@ -235,8 +235,13 @@ export function adfToTiptap(node: AdfNode): TiptapNode | null {
         }
 
         case "mention": {
-            const name = (node.attrs?.text as string) ?? (node.attrs?.displayName as string) ?? ""
-            return name ? { type: "text", text: `@${name}` } : null
+            const id = (node.attrs?.id as string) ?? ""
+            const label = (node.attrs?.text as string) ?? (node.attrs?.displayName as string) ?? id
+            if (!id && !label) return null
+            return {
+                type: "mention",
+                attrs: { id, label },
+            }
         }
 
         case "mediaSingle":
@@ -335,6 +340,15 @@ export function tiptapToAdf(node: TiptapNode): AdfNode {
 
         case "blockquote":
             return { type: "blockquote", content: (node.content ?? []).map(tiptapToAdf) }
+
+        case "mention":
+            return {
+                type: "mention",
+                attrs: {
+                    id: (node.attrs?.id as string) ?? "",
+                    text: (node.attrs?.label as string) ?? (node.attrs?.id as string) ?? "",
+                },
+            }
 
         case "hardBreak":
             return { type: "hardBreak" }

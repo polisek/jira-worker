@@ -151,23 +151,34 @@ app.whenReady().then(() => {
         const url = `${settings.baseUrl.replace(/\/$/, "")}${base}${cleanPath}`
         const credentials = Buffer.from(`${settings.email}:${settings.apiToken}`).toString("base64")
 
-        const response = await fetch(url, {
-            method: method || "GET",
-            headers: {
-                Authorization: `Basic ${credentials}`,
-                "Content-Type": "application/json",
-                Accept: "application/json",
-            },
-            body: body ? JSON.stringify(body) : undefined,
-        })
+        let response: Response
+        try {
+            response = await fetch(url, {
+                method: method || "GET",
+                headers: {
+                    Authorization: `Basic ${credentials}`,
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
+                },
+                body: body ? JSON.stringify(body) : undefined,
+            })
+        } catch (networkErr: any) {
+            console.error(`[JIRA API NETWORK ERROR] ${method} ${url}`, networkErr)
+            throw new Error(`Chyba sítě: ${networkErr?.message ?? String(networkErr)}`)
+        }
 
         const text = await response.text()
         if (!response.ok) {
             let msg = `HTTP ${response.status}`
             try {
                 const json = JSON.parse(text)
-                msg = json.errorMessages?.join(", ") || json.message || msg
-            } catch {}
+                console.error(`[JIRA API ERROR] ${method} ${url} → ${response.status}`, JSON.stringify(json, null, 2))
+                const errors = json.errors ? Object.entries(json.errors).map(([k, v]) => `${k}: ${v}`).join(", ") : ""
+                const messages = json.errorMessages?.join(", ") || ""
+                msg = [messages, errors].filter(Boolean).join(" | ") || json.message || msg
+            } catch {
+                console.error(`[JIRA API ERROR] ${method} ${url} → ${response.status}`, text)
+            }
             throw new Error(msg)
         }
 
