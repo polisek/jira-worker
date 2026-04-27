@@ -1,206 +1,57 @@
-import { useState, useEffect, useRef } from "react"
 import { X, Plus, Loader, CheckCircle } from "lucide-react"
-import { ErrorMessage } from "./shared/ErrorMessage"
-import { jiraApi } from "../utils/jira-api"
-import { UserPicker } from "./UserPicker"
-import { RichTextEditor, type RichTextEditorRef } from "./rich-text-editor"
-import type { JiraProject, JiraUser, JiraIssueType, JiraSprint, JiraIssue } from "../types/jira"
+import { ErrorMessage } from "../../shared/ErrorMessage"
+import { UserPicker } from "../../UserPicker"
+import { RichTextEditor } from "../../rich-text-editor"
+import { PRIORITIES } from "../hooks/useCreateIssueModal.controller"
+import type { CreateIssueModalProps } from "../hooks/useCreateIssueModal"
 
-interface Props {
-    projects: JiraProject[]
-    defaultProject: JiraProject | null
-    onClose: () => void
-    onCreated: (issue: JiraIssue) => void
-    /** Pre-fills and locks the epic link (used from TreeView when adding under an Epic) */
-    defaultEpic?: JiraIssue | null
-    /** Pre-fills parent key, forces Subtask type (used from TreeView when adding under a Task) */
-    defaultParentKey?: string
-    /** Intended issue type name shown in header and pre-selected in form (e.g. "Epic", "Task", "Subtask") */
-    defaultIssueTypeName?: string
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+    return (
+        <div>
+            <label className="form-label">{label}</label>
+            {children}
+        </div>
+    )
 }
 
-const PRIORITIES = [
-    { name: "Highest", color: "text-red-400" },
-    { name: "High", color: "text-orange-400" },
-    { name: "Medium", color: "text-yellow-400" },
-    { name: "Low", color: "text-blue-400" },
-    { name: "Lowest", color: "text-gray-400" },
-]
-
-export function CreateIssueModal({
+function CreateIssueModalView({
     projects,
-    defaultProject,
+    project,
+    setProject,
     onClose,
-    onCreated,
     defaultEpic,
     defaultParentKey,
     defaultIssueTypeName,
-}: Props) {
-    const [project, setProject] = useState<JiraProject | null>(defaultProject ?? projects[0] ?? null)
-
-    // Form fields
-    const [summary, setSummary] = useState("")
-    const descriptionRef = useRef<RichTextEditorRef>(null)
-    const [issueType, setIssueType] = useState<JiraIssueType | null>(null)
-    const [priority, setPriority] = useState("Medium")
-    const [assignee, setAssignee] = useState<JiraUser | null>(null)
-    const [sprint, setSprint] = useState<JiraSprint | null>(null)
-    const [storyPoints, setStoryPoints] = useState<string>("")
-    const [labels, setLabels] = useState<string[]>([])
-    const [labelInput, setLabelInput] = useState("")
-    const [epic, setEpic] = useState<JiraIssue | null>(defaultEpic ?? null)
-
-    // Async data
-    const [issueTypes, setIssueTypes] = useState<JiraIssueType[]>([])
-    const [users, setUsers] = useState<JiraUser[]>([])
-    const [sprints, setSprints] = useState<JiraSprint[]>([])
-    const [epics, setEpics] = useState<JiraIssue[]>([])
-    const [dataLoading, setDataLoading] = useState(false)
-
-    // Submit state
-    const [submitting, setSubmitting] = useState(false)
-    const [error, setError] = useState<string | null>(null)
-    const [success, setSuccess] = useState(false)
-
-    // Načti data projektu
-    useEffect(() => {
-        if (!project) return
-        setDataLoading(true)
-        setIssueType(null)
-        setSprint(null)
-        setAssignee(null)
-        setEpic(defaultEpic ?? null)
-
-        Promise.allSettled([
-            jiraApi.getIssueTypes(project.key),
-            jiraApi.getAssignableUsers(project.key),
-            jiraApi.getBoards(project.key).then(async (res) => {
-                const boardId = res.values?.[0]?.id
-                if (!boardId) return []
-                const sprintsRes = await jiraApi.getBoardSprints(boardId)
-                return sprintsRes.values ?? []
-            }),
-            jiraApi.getEpics(project.key),
-        ]).then(([typesRes, usersRes, sprintsRes, epicsRes]) => {
-            if (typesRes.status === "fulfilled") {
-                let types = typesRes.value
-                if (defaultEpic) {
-                    // Under an epic: only non-subtask, non-epic types (i.e. Task/Story/Bug)
-                    // Prefer plain Task if present
-                    const taskOnly = types.filter((t) => !t.subtask && t.name.toLowerCase() === "task")
-                    if (taskOnly.length > 0) {
-                        types = taskOnly
-                    } else {
-                        types = types.filter((t) => !t.subtask && t.name.toLowerCase() !== "epic")
-                    }
-                }
-                if (defaultParentKey) {
-                    // Under a task: only subtask types (Jira subtask boolean = true)
-                    const subtaskTypes = types.filter((t) => t.subtask === true)
-                    if (subtaskTypes.length > 0) types = subtaskTypes
-                }
-                setIssueTypes(types)
-                // Výchozí typ
-                if (defaultParentKey) {
-                    setIssueType(types[0] ?? null)
-                } else if (defaultIssueTypeName) {
-                    setIssueType(
-                        types.find((t) => t.name.toLowerCase() === defaultIssueTypeName.toLowerCase()) ??
-                            types.find((t) => t.name === "Story") ??
-                            types.find((t) => t.name === "Task") ??
-                            types[0] ??
-                            null
-                    )
-                } else {
-                    setIssueType(
-                        types.find((t) => t.name === "Story") ??
-                            types.find((t) => t.name === "Task") ??
-                            types[0] ??
-                            null
-                    )
-                }
-            }
-            if (usersRes.status === "fulfilled") setUsers(usersRes.value)
-            if (sprintsRes.status === "fulfilled") {
-                const sp = sprintsRes.value as JiraSprint[]
-                setSprints(sp)
-                // Dílčí úkoly nemají sprint — nastavit null a nezobrazovat
-                if (!defaultParentKey) {
-                    setSprint(sp.find((s) => s.state === "active") ?? null)
-                } else {
-                    setSprint(null)
-                }
-            }
-            if (epicsRes.status === "fulfilled") setEpics(epicsRes.value.issues ?? [])
-            setDataLoading(false)
-        })
-    }, [defaultEpic, defaultIssueTypeName, defaultParentKey, project, project?.key])
-
-    const handleSubmit = async () => {
-        if (!project || !summary.trim() || !issueType) return
-        setSubmitting(true)
-        setError(null)
-
-        const fields: Record<string, unknown> = {
-            project: { key: project.key },
-            summary: summary.trim(),
-            issuetype: { id: issueType.id },
-            priority: { name: priority },
-        }
-
-        const descAdf = descriptionRef.current?.getAdf()
-        if (descAdf && !descriptionRef.current?.isEmpty()) {
-            fields.description = descAdf
-        }
-        if (assignee) fields.assignee = { accountId: assignee.accountId }
-        if (sprint) fields.customfield_10020 = sprint.id
-        if (storyPoints !== "") fields.customfield_10016 = Number(storyPoints)
-        if (labels.length > 0) fields.labels = labels
-        if (defaultParentKey) fields.parent = { key: defaultParentKey } // subtask parent
-
-        // Epic link: next-gen projects use `parent`, classic use `customfield_10014`
-        // Try `parent` first; on 400 fall back to classic field.
-        const epicKey = epic?.key ?? null
-
-        try {
-            if (epicKey) fields.parent = { key: epicKey }
-            const created = await jiraApi.createIssue(fields)
-            const full = await jiraApi.getIssue(created.key)
-            setSuccess(true)
-            setTimeout(() => {
-                onCreated(full)
-                onClose()
-            }, 800)
-        } catch (e) {
-            // If linking via parent failed, retry with classic epic-link field
-            if (epicKey && String((e as Error).message).includes("400")) {
-                try {
-                    delete fields.parent
-                    fields.customfield_10014 = epicKey
-                    const created = await jiraApi.createIssue(fields)
-                    const full = await jiraApi.getIssue(created.key)
-                    setSuccess(true)
-                    setTimeout(() => {
-                        onCreated(full)
-                        onClose()
-                    }, 800)
-                    return
-                } catch (e2) {
-                    setError((e2 as Error).message)
-                }
-            } else {
-                setError((e as Error).message)
-            }
-        } finally {
-            setSubmitting(false)
-        }
-    }
-
-    const addLabel = () => {
-        const l = labelInput.trim()
-        if (l && !labels.includes(l)) setLabels((prev) => [...prev, l])
-        setLabelInput("")
-    }
+    dataProps,
+    controllerProps,
+}: CreateIssueModalProps) {
+    const { filteredIssueTypes, users, sprints, epics, isLoading } = dataProps
+    const {
+        descriptionRef,
+        summary,
+        setSummary,
+        issueType,
+        setIssueType,
+        priority,
+        setPriority,
+        assignee,
+        setAssignee,
+        sprint,
+        setSprint,
+        storyPoints,
+        setStoryPoints,
+        labels,
+        labelInput,
+        setLabelInput,
+        epic,
+        setEpic,
+        submitting,
+        error,
+        success,
+        handleSubmit,
+        addLabel,
+        removeLabel,
+    } = controllerProps
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -253,22 +104,24 @@ export function CreateIssueModal({
                         </select>
                     </Field>
 
-                    {dataLoading && (
+                    {isLoading && (
                         <div className="flex items-center gap-2 text-gray-500 text-sm py-2">
                             <Loader className="w-4 h-4 animate-spin" />
                             Načítám možnosti projektu...
                         </div>
                     )}
 
-                    {/* Typ + Priorita — vedle sebe */}
+                    {/* Typ + Priorita */}
                     <div className="grid grid-cols-2 gap-3">
                         <Field label="Typ úkolu *">
                             <select
                                 value={issueType?.id ?? ""}
-                                onChange={(e) => setIssueType(issueTypes.find((t) => t.id === e.target.value) ?? null)}
+                                onChange={(e) =>
+                                    setIssueType(filteredIssueTypes.find((t) => t.id === e.target.value) ?? null)
+                                }
                                 className="input w-full"
                             >
-                                {issueTypes.map((t) => (
+                                {filteredIssueTypes.map((t) => (
                                     <option key={t.id} value={t.id}>
                                         {t.name}
                                     </option>
@@ -389,7 +242,7 @@ export function CreateIssueModal({
                                 <span key={l} className="badge badge-gray flex items-center gap-1">
                                     {l}
                                     <button
-                                        onClick={() => setLabels((prev) => prev.filter((x) => x !== l))}
+                                        onClick={() => removeLabel(l)}
                                         className="text-gray-500 hover:text-gray-300"
                                     >
                                         ×
@@ -417,7 +270,6 @@ export function CreateIssueModal({
                         </div>
                     </Field>
 
-                    {/* Error / Success */}
                     {error && (
                         <ErrorMessage
                             message={error}
@@ -462,11 +314,4 @@ export function CreateIssueModal({
     )
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-    return (
-        <div>
-            <label className="form-label">{label}</label>
-            {children}
-        </div>
-    )
-}
+export default CreateIssueModalView

@@ -3,8 +3,8 @@ import { ChevronRight, ChevronDown, Plus, Loader2, AlertCircle, RefreshCw, GripV
 import { ErrorMessage } from "./shared/ErrorMessage"
 import { StatusBadge } from "./IssueBadges"
 import { jiraApi } from "../utils/jira-api"
-import { CreateIssueModal } from "./CreateIssueModal"
 import type { JiraIssue, JiraProject, AppPrefs } from "../types/jira"
+import CreateIssueModal from "./create-issue-modal"
 
 interface Props {
     selectedProject: JiraProject | null

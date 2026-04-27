@@ -1,10 +1,10 @@
-import { RefreshCw, Plus, Settings2 } from 'lucide-react'
-import { ErrorMessage } from '../../shared/ErrorMessage'
-import { CreateIssueModal } from '../../CreateIssueModal'
-import { StatusManagerDialog } from '../../StatusManagerDialog'
-import { BoardColumn } from '../components/BoardColumn'
-import { SprintSelector } from '../components/SprintSelector'
-import type { BoardViewProps } from '../hooks/useBoardView'
+import { RefreshCw, Plus, Settings2 } from "lucide-react"
+import { ErrorMessage } from "../../shared/ErrorMessage"
+import CreateIssueModal from "../../create-issue-modal"
+import { StatusManagerDialog } from "../../StatusManagerDialog"
+import { BoardColumn } from "../components/BoardColumn"
+import { SprintSelector } from "../components/SprintSelector"
+import type { BoardViewProps } from "../hooks/useBoardView"
 
 function BoardViewView({
     selectedProject,
@@ -15,7 +15,7 @@ function BoardViewView({
     dialogProps,
     sprintProps,
 }: BoardViewProps) {
-    const { issues, isLoading, error, total, refetch } = dataProps
+    const { isLoading, error, total, refetch } = dataProps
     const { columns, draggingId, dragOverCol, draggingColId, dragOverColId, getColumnIssues } = controllerProps
     const { showCreate, setShowCreate, showStatusManager, setShowStatusManager } = dialogProps
 
@@ -25,7 +25,7 @@ function BoardViewView({
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800 gap-3">
                 <div className="flex items-center gap-3 min-w-0">
                     <h1 className="font-semibold text-gray-100 truncate">
-                        {selectedProject ? selectedProject.name : 'Všechny projekty'}
+                        {selectedProject ? selectedProject.name : "Všechny projekty"}
                     </h1>
                     {!isLoading && <span className="text-xs text-gray-500 shrink-0">{total} tasků</span>}
                 </div>
@@ -34,14 +34,10 @@ function BoardViewView({
                     <SprintSelector sprintProps={sprintProps} />
 
                     <button onClick={refetch} className="btn-icon" disabled={isLoading}>
-                        <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+                        <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
                     </button>
                     {selectedProject && (
-                        <button
-                            onClick={() => setShowStatusManager(true)}
-                            className="btn-icon"
-                            title="Spravovat stavy"
-                        >
+                        <button onClick={() => setShowStatusManager(true)} className="btn-icon" title="Spravovat stavy">
                             <Settings2 className="w-4 h-4" />
                         </button>
                     )}
@@ -55,10 +51,7 @@ function BoardViewView({
             </div>
 
             {showStatusManager && selectedProject && (
-                <StatusManagerDialog
-                    project={selectedProject}
-                    onClose={() => setShowStatusManager(false)}
-                />
+                <StatusManagerDialog project={selectedProject} onClose={() => setShowStatusManager(false)} />
             )}
 
             {showCreate && (
@@ -81,7 +74,7 @@ function BoardViewView({
                 {/* Skeleton při prvním načtení */}
                 {isLoading &&
                     columns.length === 0 &&
-                    ['', '', ''].map((_, i) => (
+                    ["", "", ""].map((_, i) => (
                         <div key={i} className="board-column flex flex-col min-w-64 max-w-64">
                             <div className="h-5 bg-gray-800 rounded mb-3 w-28 animate-pulse" />
                             {[1, 2, 3].map((n) => (

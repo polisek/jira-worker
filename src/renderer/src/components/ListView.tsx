@@ -1,13 +1,13 @@
 import { useState } from "react"
-import { RefreshCw, AlertCircle, Plus, SlidersHorizontal } from "lucide-react"
+import { RefreshCw, Plus, SlidersHorizontal } from "lucide-react"
 import { ErrorMessage } from "./shared/ErrorMessage"
 import { StatusBadge, PriorityDot } from "./IssueBadges"
 import { useIssues } from "../hooks/useIssues"
 import { formatDateShort } from "../utils/adf"
-import { CreateIssueModal } from "./CreateIssueModal"
 import { FilterModal } from "./FilterModal"
 import type { JiraIssue, JiraProject, AppPrefs, AdvancedFilter } from "../types/jira"
 import { DEFAULT_ADVANCED_FILTER } from "../types/jira"
+import CreateIssueModal from "./create-issue-modal"
 
 interface Props {
     selectedProject: JiraProject | null
