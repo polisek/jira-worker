@@ -1,6 +1,6 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { agileRequest } from '../client'
-import { queryKeys } from '../queryKeys'
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { agileRequest } from "../client"
+import { queryKeys } from "../queryKeys"
 
 interface RankIssueParams {
     issueKey: string
@@ -16,7 +16,7 @@ export async function rankIssueRequest(
     const body: Record<string, unknown> = { issues: [issueKey] }
     if (beforeKey) body.rankBeforeIssue = beforeKey
     else if (afterKey) body.rankAfterIssue = afterKey
-    return agileRequest<void>('/issue/rank', 'PUT', body)
+    return agileRequest<void>("/issue/rank", "PUT", body)
 }
 
 export function useRankIssueMutation() {

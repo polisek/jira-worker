@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from "react"
-import { rankIssueRequest } from "../../../api/sprints/rank-issue"
+import { useRankIssueMutation } from "../../../api/sprints/rank-issue"
+import { useUpdateIssueMutation } from "../../../api/issues/update-issue"
 import type { JiraIssue } from "../../../types/jira"
 import type { TreeViewDataProps } from "./useTreeView.data"
 
@@ -8,15 +9,25 @@ export type CreateCtx = {
     createTypeName: string
 } | null
 
+/** Pending cross-epic move — shown in confirmation dialog */
+export type MoveCtx = {
+    issue: JiraIssue
+    fromEpicKey: string
+    toEpicKey: string
+} | null
+
 export type TreeViewControllerProps = {
     expanded: Set<string>
     dragOverKey: string | null
     createCtx: CreateCtx
     setCreateCtx: (ctx: CreateCtx) => void
+    moveCtx: MoveCtx
+    setMoveCtx: (ctx: MoveCtx) => void
+    handleMoveConfirm: () => Promise<void>
     handleToggle: (issue: JiraIssue) => void
     handleDragStart: (key: string, parentKey: string | null) => void
     handleDragOver: (key: string) => void
-    handleDrop: (toKey: string) => void
+    handleDrop: (toKey: string, toIssue: JiraIssue, toParentKey: string | null) => void
     handleDragEnd: () => void
     handleCreated: (created: JiraIssue) => void
 }
@@ -26,6 +37,7 @@ const useTreeViewController = (dataProps: TreeViewDataProps): TreeViewController
 
     const [expanded, setExpanded] = useState<Set<string>>(new Set())
     const [createCtx, setCreateCtx] = useState<CreateCtx>(null)
+    const [moveCtx, setMoveCtx] = useState<MoveCtx>(null)
 
     // ── Drag & drop ────────────────────────────────────────────────────────────
     const draggingRef = useRef<{ key: string; parentKey: string | null } | null>(null)
@@ -41,12 +53,34 @@ const useTreeViewController = (dataProps: TreeViewDataProps): TreeViewController
         }
     }, [])
 
+    const { mutateAsync: rankIssue } = useRankIssueMutation()
     const handleDrop = useCallback(
-        (toKey: string) => {
+        (toKey: string, toIssue: JiraIssue, toParentKey: string | null) => {
             const drag = draggingRef.current
             if (!drag || drag.key === toKey) {
                 setDragOverKey(null)
                 return
+            }
+
+            // ── Cross-epic move: task dropped into a different epic's branch ──
+            if (drag.parentKey !== null && toParentKey !== null && drag.parentKey !== toParentKey) {
+                // Find the dragged issue object from nodeStates
+                let dragIssue: JiraIssue | undefined
+                for (const ns of dataProps.nodeStates.values()) {
+                    dragIssue = ns.children?.find((c) => c.key === drag.key)
+                    if (dragIssue) break
+                }
+                if (dragIssue) {
+                    console.log(toIssue, toParentKey)
+                    setMoveCtx({
+                        issue: dragIssue,
+                        fromEpicKey: drag.parentKey ?? toIssue.key,
+                        toEpicKey: toParentKey,
+                    })
+                    draggingRef.current = null
+                    setDragOverKey(null)
+                    return
+                }
             }
 
             const reorder = (
@@ -67,7 +101,7 @@ const useTreeViewController = (dataProps: TreeViewDataProps): TreeViewController
             if (drag.parentKey === null) {
                 setEpics((prev) => {
                     const { next, beforeKey, afterKey } = reorder(prev)
-                    rankIssueRequest(drag.key, beforeKey, afterKey).catch(() => {
+                    rankIssue({ issueKey: drag.key, beforeKey, afterKey }).catch(() => {
                         loadEpicsRef.current?.(false)
                     })
                     return next
@@ -77,7 +111,7 @@ const useTreeViewController = (dataProps: TreeViewDataProps): TreeViewController
                     const existing = prev.get(drag.parentKey!)
                     if (!existing?.children) return prev
                     const { next: nextChildren, beforeKey, afterKey } = reorder(existing.children)
-                    rankIssueRequest(drag.key, beforeKey, afterKey).catch(() => {})
+                    rankIssue({ issueKey: drag.key, beforeKey, afterKey })
                     const nextMap = new Map(prev)
                     nextMap.set(drag.parentKey!, { ...existing, children: nextChildren })
                     return nextMap
@@ -86,13 +120,53 @@ const useTreeViewController = (dataProps: TreeViewDataProps): TreeViewController
             draggingRef.current = null
             setDragOverKey(null)
         },
-        [setEpics, setNodeStates, loadEpicsRef]
+        [dataProps.nodeStates, setEpics, rankIssue, loadEpicsRef, setNodeStates]
     )
 
     const handleDragEnd = useCallback(() => {
         draggingRef.current = null
         setDragOverKey(null)
     }, [])
+
+    // ── Confirm cross-epic move ────────────────────────────────────────────────
+
+    const { mutateAsync: updateIssue } = useUpdateIssueMutation()
+    const handleMoveConfirm = useCallback(async () => {
+        if (!moveCtx) return
+        const { issue, fromEpicKey, toEpicKey } = moveCtx
+        setMoveCtx(null)
+
+        // Optimistic: remove from source epic branch, add to target
+        setNodeStates((prev) => {
+            const nextMap = new Map(prev)
+            const from = prev.get(fromEpicKey)
+            if (from?.children) {
+                nextMap.set(fromEpicKey, { ...from, children: from.children.filter((c) => c.key !== issue.key) })
+            }
+            const to = prev.get(toEpicKey)
+            if (to?.children) {
+                nextMap.set(toEpicKey, { ...to, children: [...to.children, issue] })
+            }
+            return nextMap
+        })
+
+        // Ensure target epic is expanded
+        setExpanded((prev) => {
+            const next = new Set(prev)
+            next.add(toEpicKey)
+            return next
+        })
+
+        try {
+            // Try next-gen parent field first, fall back to classic epic link
+            await updateIssue({ key: issue.key, parent: { key: toEpicKey } })
+        } catch (e) {
+            console.error("Cross-epic move failed:", e)
+            // Revert by reloading both branches
+            const fromIssue = dataProps.epics.find((ep) => ep.key === fromEpicKey)
+            if (fromIssue) loadChildren(fromIssue)
+        }
+    }, [dataProps.epics, loadChildren, moveCtx, setNodeStates, updateIssue])
 
     // ── Expand / collapse ──────────────────────────────────────────────────────
 
@@ -142,6 +216,9 @@ const useTreeViewController = (dataProps: TreeViewDataProps): TreeViewController
         dragOverKey,
         createCtx,
         setCreateCtx,
+        moveCtx,
+        setMoveCtx,
+        handleMoveConfirm,
         handleToggle,
         handleDragStart,
         handleDragOver,

@@ -2,6 +2,7 @@ import { Plus, Loader2, RefreshCw } from "lucide-react"
 import { ErrorMessage } from "../../shared/ErrorMessage"
 import CreateIssueModal from "../../create-issue-modal"
 import { TreeNode } from "../components/TreeNode"
+import { MoveToEpicDialog } from "../components/MoveToEpicDialog"
 import type { TreeViewProps } from "../hooks/useTreeView"
 
 function TreeViewView({ selectedProject, projects, onSelectIssue, dataProps, controllerProps }: TreeViewProps) {
@@ -11,6 +12,9 @@ function TreeViewView({ selectedProject, projects, onSelectIssue, dataProps, con
         dragOverKey,
         createCtx,
         setCreateCtx,
+        moveCtx,
+        setMoveCtx,
+        handleMoveConfirm,
         handleToggle,
         handleDragStart,
         handleDragOver,
@@ -116,12 +120,13 @@ function TreeViewView({ selectedProject, projects, onSelectIssue, dataProps, con
                 )}
 
                 {!epicsLoading &&
-                    epics.map((epic) => (
+                    epics.map((epic, idx) => (
                         <TreeNode
                             key={epic.key}
                             issue={epic}
                             level={0}
                             parentKey={null}
+                            rowIndex={idx}
                             nodeStates={nodeStates}
                             expanded={expanded}
                             dragOverKey={dragOverKey}
@@ -143,6 +148,13 @@ function TreeViewView({ selectedProject, projects, onSelectIssue, dataProps, con
                     onCreated={handleCreated}
                 />
             )}
+
+            {/* Cross-epic move confirmation dialog */}
+            <MoveToEpicDialog
+                moveCtx={moveCtx}
+                onConfirm={handleMoveConfirm}
+                onCancel={() => setMoveCtx(null)}
+            />
         </div>
     )
 }

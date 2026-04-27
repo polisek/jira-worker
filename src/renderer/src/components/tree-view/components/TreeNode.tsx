@@ -26,6 +26,7 @@ interface TreeNodeProps {
     issue: JiraIssue
     level: number
     parentKey: string | null
+    rowIndex: number // index within parent's children, used for zebra striping
     nodeStates: Map<string, NodeState>
     expanded: Set<string>
     dragOverKey: string | null
@@ -45,6 +46,7 @@ export function TreeNode({
     issue,
     level,
     parentKey,
+    rowIndex,
     nodeStates,
     expanded,
     dragOverKey,
@@ -58,6 +60,7 @@ export function TreeNode({
     const isExpanded = expanded.has(issue.key)
     const nodeState = nodeStates.get(issue.key)
     const isDragTarget = dragOverKey === issue.key
+    const isEven = rowIndex % 2 === 0
     const ROW_LEFT = 4 + level * INDENT
 
     return (
@@ -85,11 +88,15 @@ export function TreeNode({
                 onDrop={(e) => {
                     e.preventDefault()
                     e.stopPropagation()
-                    handleDrop(issue.key)
+                    handleDrop(issue.key, issue, parentKey)
                 }}
                 onDragEnd={handleDragEnd}
                 className="group flex items-center gap-1.5 py-[5px] pr-1 rounded-md transition-colors hover:bg-[var(--c-item-h)]"
-                style={{ paddingLeft: ROW_LEFT, cursor: 'default' }}
+                style={{
+                    paddingLeft: ROW_LEFT,
+                    cursor: 'default',
+                    background: isEven ? 'transparent' : 'var(--c-row-alt)',
+                }}
             >
                 <GripVertical
                     className="w-3 h-3 shrink-0 opacity-0 group-hover:opacity-40 transition-opacity cursor-grab"
@@ -172,12 +179,13 @@ export function TreeNode({
                         </p>
                     )}
                     {nodeState.children !== null &&
-                        nodeState.children.map((child) => (
+                        nodeState.children.map((child, idx) => (
                             <TreeNode
                                 key={child.key}
                                 issue={child}
                                 level={level + 1}
                                 parentKey={issue.key}
+                                rowIndex={idx}
                                 nodeStates={nodeStates}
                                 expanded={expanded}
                                 dragOverKey={dragOverKey}
