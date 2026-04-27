@@ -6,7 +6,7 @@ import { LinkEdge } from "../components/LinkEdge"
 import { ParentEdge } from "../components/ParentEdge"
 import { GraphToolbar } from "../components/GraphToolbar"
 import { ErrorMessage } from "../../shared/ErrorMessage"
-import { CreateIssueModal } from "../../CreateIssueModal"
+import CreateIssueModal from "../../create-issue-modal"
 import { IssueContextMenu } from "../components/IssueContextMenu"
 import type { GraphViewProps } from "../hooks/useGraphView"
 
