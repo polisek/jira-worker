@@ -34,6 +34,7 @@
     --c-pre-bg:       rgba(31, 41, 55, 0.8);
     --c-quote-border: #4b5563;
     --c-shadow:       rgba(0, 0, 0, 0.3);
+    --c-row-alt:      rgba(255, 255, 255, 0.04);
 }
 
 :root.light {
@@ -66,6 +67,7 @@
     --c-pre-bg:       rgba(208, 215, 222, 0.3);
     --c-quote-border: #d0d7de;
     --c-shadow:       rgba(0, 0, 0, 0.08);
+    --c-row-alt:      rgba(0, 0, 0, 0.04);
 }
 
 @layer base {
