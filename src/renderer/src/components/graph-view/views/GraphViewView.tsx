@@ -5,9 +5,9 @@ import { IssueNode } from "../components/IssueNode"
 import { LinkEdge } from "../components/LinkEdge"
 import { ParentEdge } from "../components/ParentEdge"
 import { GraphToolbar } from "../components/GraphToolbar"
-import { ErrorMessage } from "../../ErrorMessage"
+import { ErrorMessage } from "../../shared/ErrorMessage"
 import { CreateIssueModal } from "../../CreateIssueModal"
-import { IssueContextMenu } from "../../IssueContextMenu"
+import { IssueContextMenu } from "../components/IssueContextMenu"
 import type { GraphViewProps } from "../hooks/useGraphView"
 
 const NODE_TYPES = { issueNode: IssueNode }

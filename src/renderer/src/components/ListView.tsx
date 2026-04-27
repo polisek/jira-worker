@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { RefreshCw, AlertCircle, Plus, SlidersHorizontal } from "lucide-react"
-import { ErrorMessage } from "./ErrorMessage"
+import { ErrorMessage } from "./shared/ErrorMessage"
 import { StatusBadge, PriorityDot } from "./IssueBadges"
 import { useIssues } from "../hooks/useIssues"
 import { formatDateShort } from "../utils/adf"
