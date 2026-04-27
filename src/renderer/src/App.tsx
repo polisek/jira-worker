@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react"
 import { TitleBar } from "./components/TitleBar"
 import { Sidebar } from "./components/Sidebar"
-import { BoardView } from "./components/BoardView"
+import BoardView from "./components/board-view"
 import { ListView } from "./components/ListView"
 import { SettingsView } from "./components/SettingsView"
 import { TaskDetail } from "./components/task-detail"
@@ -100,8 +100,7 @@ export default function App() {
 
         if ((prefs.theme ?? "dark") === "auto") {
             const mq = window.matchMedia("(prefers-color-scheme: dark)")
-            const handler = (e: MediaQueryListEvent) =>
-                document.documentElement.classList.toggle("light", !e.matches)
+            const handler = (e: MediaQueryListEvent) => document.documentElement.classList.toggle("light", !e.matches)
             mq.addEventListener("change", handler)
             return () => mq.removeEventListener("change", handler)
         }

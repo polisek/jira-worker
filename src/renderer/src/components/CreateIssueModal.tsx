@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react"
-import { X, Plus, Loader, AlertCircle, CheckCircle } from "lucide-react"
-import { ErrorMessage } from "./ErrorMessage"
+import { X, Plus, Loader, CheckCircle } from "lucide-react"
+import { ErrorMessage } from "./shared/ErrorMessage"
 import { jiraApi } from "../utils/jira-api"
 import { UserPicker } from "./UserPicker"
 import { RichTextEditor, type RichTextEditorRef } from "./rich-text-editor"
@@ -131,7 +131,7 @@ export function CreateIssueModal({
                     setSprint(null)
                 }
             }
-            if (epicsRes.status === "fulfilled") setEpics((epicsRes.value as any).issues ?? [])
+            if (epicsRes.status === "fulfilled") setEpics(epicsRes.value.issues ?? [])
             setDataLoading(false)
         })
     }, [defaultEpic, defaultIssueTypeName, defaultParentKey, project, project?.key])
@@ -171,9 +171,9 @@ export function CreateIssueModal({
                 onCreated(full)
                 onClose()
             }, 800)
-        } catch (e: any) {
+        } catch (e) {
             // If linking via parent failed, retry with classic epic-link field
-            if (epicKey && String(e.message).includes("400")) {
+            if (epicKey && String((e as Error).message).includes("400")) {
                 try {
                     delete fields.parent
                     fields.customfield_10014 = epicKey
@@ -185,11 +185,11 @@ export function CreateIssueModal({
                         onClose()
                     }, 800)
                     return
-                } catch (e2: any) {
-                    setError(e2.message)
+                } catch (e2) {
+                    setError((e2 as Error).message)
                 }
             } else {
-                setError(e.message)
+                setError((e as Error).message)
             }
         } finally {
             setSubmitting(false)

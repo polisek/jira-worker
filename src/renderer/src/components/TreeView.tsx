@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { ChevronRight, ChevronDown, Plus, Loader2, AlertCircle, RefreshCw, GripVertical } from "lucide-react"
-import { ErrorMessage } from "./ErrorMessage"
+import { ErrorMessage } from "./shared/ErrorMessage"
 import { StatusBadge } from "./IssueBadges"
 import { jiraApi } from "../utils/jira-api"
 import { CreateIssueModal } from "./CreateIssueModal"

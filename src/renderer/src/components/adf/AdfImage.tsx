@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { ZoomIn } from "lucide-react"
-import { ImageLightbox } from "../ImageLightbox"
+import { ImageLightbox } from "../shared/ImageLightbox"
 
 interface Props {
     contentUrl: string

@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react"
-import { jiraApi } from "../utils/jira-api"
-import { UserPicker } from "./UserPicker"
-import { fmtTime } from "../utils/time"
-import type { JiraIssue, JiraTransition, JiraUser, JiraSprint, JiraProject } from "../types/jira"
+import { jiraApi } from "../../../utils/jira-api"
+import { UserPicker } from "../../UserPicker"
+import { fmtTime } from "../../../utils/time"
+import type { JiraIssue, JiraTransition, JiraUser, JiraSprint, JiraProject } from "../../../types/jira"
 
 interface Props {
     issue: JiraIssue
@@ -66,7 +66,7 @@ export function IssueContextMenu({ issue, x, y, selectedProject, onClose, onUpda
             })
             .catch(console.error)
             .finally(() => setLoading(false))
-    }, [issue.key, selectedProject])
+    }, [issue.fields.project?.key, issue.key, selectedProject])
 
     const wrap = async (fn: () => Promise<void>) => {
         setSaving(true)
@@ -75,8 +75,8 @@ export function IssueContextMenu({ issue, x, y, selectedProject, onClose, onUpda
             await fn()
             onUpdated()
             onClose()
-        } catch (e: any) {
-            setError(e?.message ?? "Chyba při ukládání")
+        } catch (e) {
+            setError((e as Error)?.message ?? "Chyba při ukládání")
             setSaving(false)
         }
     }
