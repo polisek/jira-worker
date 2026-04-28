@@ -14,6 +14,16 @@ import type { GraphViewDataProps } from "./useGraphView.data"
 
 export type ContextMenuState = { x: number; y: number; issue: JiraIssue } | null
 
+export type PendingReparent = {
+    childIssue: JiraIssue
+    oldParentIssue: JiraIssue | null
+    newParentIssue: JiraIssue
+    /** Additional info about type change, e.g. "Task → Sub-task" */
+    typeChange: string | null
+    /** Execute the reparent */
+    execute: () => void
+}
+
 export type GraphViewControllerProps = {
     nodes: ReturnType<typeof useNodesState>[0]
     edges: ReturnType<typeof useEdgesState>[0]
@@ -24,6 +34,8 @@ export type GraphViewControllerProps = {
     onNodeDragStop: () => void
     onConnect: (connection: Connection) => void
     onConnectEnd: (event: MouseEvent | TouchEvent, state: Record<string, unknown>) => void
+    pendingReparent: PendingReparent | null
+    cancelReparent: () => void
     handleNodeContextMenu: (event: React.MouseEvent, node: Record<string, unknown>) => void
     contextMenu: ContextMenuState
     setContextMenu: (menu: ContextMenuState) => void
@@ -45,7 +57,9 @@ const useGraphViewController = (
     const [contextMenu, setContextMenu] = useState<ContextMenuState>(null)
     const [createTaskForEpicKey, setCreateTaskForEpicKey] = useState<string | null>(null)
     const [createSubtaskForKey, setCreateSubtaskForKey] = useState<string | null>(null)
+    const [pendingReparent, setPendingReparent] = useState<PendingReparent | null>(null)
     const nodesRef = useRef(nodes)
+    const edgesRef = useRef(edges)
     const dropPositionRef = useRef<{ x: number; y: number } | null>(null)
     const saveTimeout = useRef<ReturnType<typeof setTimeout>>()
     const { screenToFlowPosition } = useReactFlow()
@@ -53,6 +67,10 @@ const useGraphViewController = (
     useEffect(() => {
         nodesRef.current = nodes
     }, [nodes])
+
+    useEffect(() => {
+        edgesRef.current = edges
+    }, [edges])
 
     useEffect(() => {
         setNodes(initNodes)
@@ -129,21 +147,109 @@ const useGraphViewController = (
                     )
                     .catch(console.error)
             } else {
-                setEdges((eds) =>
-                    addEdge(
-                        {
-                            ...connection,
-                            type: "default",
-                            style: { stroke: "#8b5cf6", strokeWidth: 1.5, strokeDasharray: "4 2" },
-                            markerEnd: { type: "arrowclosed" as const, color: "#8b5cf6" },
-                        },
-                        eds
-                    )
+                // Parent-child connection — also handles reparenting when target already has a parentEdge
+                // Handles where the SOURCE node is actually the CHILD (dragging child → new parent):
+                //   left-parent-src, top-src (child drags to parent)
+                // Handles where the SOURCE node is the PARENT (dragging parent → new child):
+                //   right-parent, bottom, left-parent-src on Epic side
+                const childIsSource = sourceHandle === "left-parent-src" || sourceHandle === "top-src"
+                const newParentKey = childIsSource ? target : source
+                const childKey = childIsSource ? source : target
+
+                const newParentNode = nodesRef.current.find((n) => n.id === newParentKey)
+                const childNode = nodesRef.current.find((n) => n.id === childKey)
+                if (!newParentNode || !childNode) return
+
+                const newParentData = newParentNode.data as Record<string, unknown>
+                const childData = childNode.data as Record<string, unknown>
+                const newParentIsEpic = newParentData.isEpic === true
+                const childIssue = childData.issue as JiraIssue
+                const newParentIssue = newParentData.issue as JiraIssue
+
+                // Subtask cannot be a parent
+                if (newParentIssue.fields.issuetype.subtask) return
+
+                const existingParentEdge = edgesRef.current.find(
+                    (e) => e.type === "parentEdge" && e.target === childKey
                 )
+
+                // No change if same parent
+                if (existingParentEdge && existingParentEdge.source === newParentKey) return
+
+                const oldParentNode = existingParentEdge
+                    ? nodesRef.current.find((n) => n.id === existingParentEdge.source)
+                    : null
+                const oldParentIssue = oldParentNode
+                    ? ((oldParentNode.data as Record<string, unknown>).issue as JiraIssue)
+                    : null
+
+                const { sourceHandle: sh, targetHandle: th } = parentChildHandles(
+                    newParentNode.position,
+                    childNode.position,
+                    newParentIsEpic
+                )
+
+                const newEdge = {
+                    id: existingParentEdge ? existingParentEdge.id : `parent--${newParentKey}--${childKey}`,
+                    source: newParentKey,
+                    target: childKey,
+                    type: "parentEdge" as const,
+                    animated: false,
+                    reconnectable: "source" as const,
+                    sourceHandle: sh,
+                    targetHandle: th,
+                    data: { originalEstimate: childIssue.fields.timeoriginalestimate ?? 0 },
+                    style: { stroke: "#8b5cf6", strokeWidth: 1.5, strokeDasharray: "4 2" },
+                    markerEnd: { type: "arrowclosed" as const, color: "#8b5cf6" },
+                }
+
+                const isCurrentlySubtask = childIssue.fields.issuetype.subtask === true
+
+                const findTypeName = (wantSubtask: boolean): string => {
+                    for (const node of nodesRef.current) {
+                        const iss = (node.data as Record<string, unknown>).issue as JiraIssue
+                        const nodeIsEpic = (node.data as Record<string, unknown>).isEpic === true
+                        if (wantSubtask && iss.fields.issuetype.subtask) return iss.fields.issuetype.name
+                        if (!wantSubtask && !iss.fields.issuetype.subtask && !nodeIsEpic) return iss.fields.issuetype.name
+                    }
+                    return wantSubtask ? "Sub-task" : "Task"
+                }
+
+                const updateFields: Record<string, unknown> = { parent: { key: newParentKey } }
+                let typeChange: string | null = null
+
+                if (newParentIsEpic && isCurrentlySubtask) {
+                    const newTypeName = findTypeName(false)
+                    updateFields.issuetype = { name: newTypeName }
+                    typeChange = `${childIssue.fields.issuetype.name} → ${newTypeName}`
+                } else if (!newParentIsEpic && !isCurrentlySubtask) {
+                    const newTypeName = findTypeName(true)
+                    updateFields.issuetype = { name: newTypeName }
+                    typeChange = `${childIssue.fields.issuetype.name} → ${newTypeName}`
+                }
+
+                const execute = () => {
+                    setEdges((eds) => {
+                        const filtered = existingParentEdge ? eds.filter((e) => e.id !== existingParentEdge.id) : eds
+                        return addEdge(newEdge as Parameters<typeof addEdge>[0], filtered)
+                    })
+                    jiraApi
+                        .updateIssue(childKey, updateFields)
+                        .then(() => dataProps.reload())
+                        .catch((err) => {
+                            console.error("Reparenting failed:", err)
+                            dataProps.reload()
+                        })
+                    setPendingReparent(null)
+                }
+
+                setPendingReparent({ childIssue, oldParentIssue, newParentIssue, typeChange, execute })
             }
         },
-        [setEdges]
+        [setEdges, dataProps]
     )
+
+    const cancelReparent = useCallback(() => setPendingReparent(null), [])
 
     const onConnectEnd = useCallback(
         (event: MouseEvent | TouchEvent, state: Record<string, unknown>) => {
@@ -215,6 +321,8 @@ const useGraphViewController = (
         onNodeDragStop,
         onConnect,
         onConnectEnd,
+        pendingReparent,
+        cancelReparent,
         handleNodeContextMenu,
         contextMenu,
         setContextMenu,

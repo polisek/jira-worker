@@ -90,6 +90,7 @@ function issuesToEdges(issues: JiraIssue[], positions: Record<string, GraphNodeP
             addEdge(`parent--${parentKey}--${issue.key}`, parentKey, issue.key, {
                 type: "parentEdge",
                 animated: false,
+                reconnectable: "source" as const,
                 sourceHandle,
                 targetHandle,
                 data: { originalEstimate: issue.fields.timeoriginalestimate ?? 0 },

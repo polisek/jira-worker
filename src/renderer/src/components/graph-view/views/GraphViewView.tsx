@@ -8,6 +8,7 @@ import { GraphToolbar } from "../components/GraphToolbar"
 import { ErrorMessage } from "../../shared/ErrorMessage"
 import CreateIssueModal from "../../create-issue-modal"
 import { IssueContextMenu } from "../components/IssueContextMenu"
+import { ReparentConfirmDialog } from "../components/ReparentConfirmDialog"
 import type { GraphViewProps } from "../hooks/useGraphView"
 
 const NODE_TYPES = { issueNode: IssueNode }
@@ -31,6 +32,8 @@ export function GraphViewView({
         onNodeDragStop,
         onConnect,
         onConnectEnd,
+        pendingReparent,
+        cancelReparent,
         handleNodeContextMenu,
         contextMenu,
         setContextMenu,
@@ -170,6 +173,13 @@ export function GraphViewView({
                     selectedProject={selectedProject}
                     onClose={() => setContextMenu(null)}
                     onUpdated={reload}
+                />
+            )}
+
+            {pendingReparent && (
+                <ReparentConfirmDialog
+                    pending={pendingReparent}
+                    onCancel={cancelReparent}
                 />
             )}
         </div>
