@@ -31,7 +31,6 @@ function BoardViewView({
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
-                    <SprintSelector sprintProps={sprintProps} />
 
                     <button onClick={refetch} className="btn-icon" disabled={isLoading}>
                         <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
@@ -41,6 +40,7 @@ function BoardViewView({
                             <Settings2 className="w-4 h-4" />
                         </button>
                     )}
+                    <SprintSelector sprintProps={sprintProps} />
                     <button
                         onClick={() => setShowCreate(true)}
                         className="btn-primary flex items-center gap-1.5 text-sm px-3 py-1.5"

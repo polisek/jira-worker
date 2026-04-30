@@ -80,15 +80,15 @@ function TreeViewView({ selectedProject, projects, onSelectIssue, dataProps, con
                 </div>
 
                 <div className="flex items-center gap-1.5">
+                    <button onClick={() => loadEpics()} className="btn-icon" title="Obnovit" disabled={epicsLoading}>
+                        <RefreshCw className={`w-3.5 h-3.5 ${epicsLoading ? "animate-spin" : ""}`} />
+                    </button>
                     <button
                         onClick={() => setCreateCtx({ parentIssue: null, createTypeName: "Epic" })}
-                        className="btn-secondary text-xs flex items-center gap-1.5 py-1 px-2.5"
+                        className="btn-primary flex items-center gap-1.5 text-sm px-3 py-1.5"
                         title="Přidat Epic"
                     >
                         <Plus className="w-3 h-3" /> Nový Epic
-                    </button>
-                    <button onClick={() => loadEpics()} className="btn-icon" title="Obnovit" disabled={epicsLoading}>
-                        <RefreshCw className={`w-3.5 h-3.5 ${epicsLoading ? "animate-spin" : ""}`} />
                     </button>
                 </div>
             </div>
@@ -150,11 +150,7 @@ function TreeViewView({ selectedProject, projects, onSelectIssue, dataProps, con
             )}
 
             {/* Cross-epic move confirmation dialog */}
-            <MoveToEpicDialog
-                moveCtx={moveCtx}
-                onConfirm={handleMoveConfirm}
-                onCancel={() => setMoveCtx(null)}
-            />
+            <MoveToEpicDialog moveCtx={moveCtx} onConfirm={handleMoveConfirm} onCancel={() => setMoveCtx(null)} />
         </div>
     )
 }

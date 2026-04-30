@@ -46,23 +46,22 @@ export function GraphToolbar({
                 ))}
             </select>
 
+            <div className="flex items-center gap-3 text-[10px] text-gray-500 ml-auto">
+                <span className="flex items-center gap-1">
+                    <span className="w-3 h-3 rounded-full bg-purple-500 inline-block shrink-0" /> Rodič
+                </span>
+                <span className="flex items-center gap-1">
+                    <span className="w-3 h-3 rounded-full bg-red-500 inline-block shrink-0" /> Blokuje
+                </span>
+                <span className="flex items-center gap-1">
+                    <span className="w-3 h-3 rounded-full bg-blue-500 inline-block shrink-0" /> Souvisí
+                </span>
+            </div>
+
             {selectedEpicKey && (
-                <>
-                    <button
-                        className="btn-secondary flex items-center gap-1.5 text-sm px-3 py-1.5"
-                        onClick={onReload}
-                        disabled={loading}
-                    >
+                <div className="ml-auto flex items-center gap-3">
+                    <button className="btn-icon" title="Obnovit" onClick={onReload} disabled={loading}>
                         <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-                        {loading ? "Načítám…" : "Refresh"}
-                    </button>
-                    <button
-                        className="btn-primary flex items-center gap-1.5 text-sm px-3 py-1.5"
-                        onClick={() => onSaveLayout(nodes)}
-                        title="Uložit aktuální rozmístění nodů do Jiry"
-                    >
-                        <UploadCloud className="w-3.5 h-3.5" />
-                        Uložit layout
                     </button>
                     {layoutSource !== "none" && (
                         <span
@@ -80,20 +79,16 @@ export function GraphToolbar({
                             {layoutSource === "jira" ? "☁ Jira" : "💾 Lokální"}
                         </span>
                     )}
-                </>
+                    <button
+                        className="btn-primary flex items-center gap-1.5 text-sm px-3 py-1.5"
+                        onClick={() => onSaveLayout(nodes)}
+                        title="Uložit aktuální rozmístění nodů do Jiry"
+                    >
+                        <UploadCloud className="w-3.5 h-3.5" />
+                        Uložit layout
+                    </button>
+                </div>
             )}
-
-            <div className="flex items-center gap-3 ml-auto text-[10px] text-gray-500">
-                <span className="flex items-center gap-1">
-                    <span className="w-3 h-3 rounded-full bg-purple-500 inline-block shrink-0" /> Rodič
-                </span>
-                <span className="flex items-center gap-1">
-                    <span className="w-3 h-3 rounded-full bg-red-500 inline-block shrink-0" /> Blokuje
-                </span>
-                <span className="flex items-center gap-1">
-                    <span className="w-3 h-3 rounded-full bg-blue-500 inline-block shrink-0" /> Souvisí
-                </span>
-            </div>
         </div>
     )
 }

@@ -214,3 +214,119 @@ Mention.configure({
 Stejný vzor platí pro jakýkoli budoucí inline node (emoji picker, issue link chip atd.) — vždy definovat třídu v extension, styl v `globals.css`.
 
 Referenční soubor: [`src/renderer/src/styles/globals.css`](../src/renderer/src/styles/globals.css)
+
+---
+
+## Resizable panel — drag handle s mousedown
+
+Panel s nastavitelnou výškou (např. backlog panel v RoadmapView) používá `mousedown` na drag handle + globální `mousemove`/`mouseup` listenery na `window`. Tracking start pozice jde přes `useRef` — zamezuje zbytečnému re-renderu při pohybu myši.
+
+```ts
+// useFeature.controller.ts
+const dragStartY = useRef<number | null>(null)
+const dragStartHeight = useRef<number>(DEFAULT_HEIGHT)
+
+const onResizeMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    dragStartY.current = e.clientY
+    dragStartHeight.current = panelHeight
+
+    const onMouseMove = (ev: MouseEvent) => {
+        if (dragStartY.current === null) return
+        const delta = dragStartY.current - ev.clientY
+        const next = Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, dragStartHeight.current + delta))
+        setPanelHeight(next)
+    }
+    const onMouseUp = () => {
+        dragStartY.current = null
+        window.removeEventListener('mousemove', onMouseMove)
+        window.removeEventListener('mouseup', onMouseUp)
+    }
+    window.addEventListener('mousemove', onMouseMove)
+    window.addEventListener('mouseup', onMouseUp)
+}, [panelHeight])
+```
+
+```tsx
+// View — drag handle
+<div
+    onMouseDown={onResizeMouseDown}
+    style={{ height: 6, cursor: 'row-resize' }}
+>
+    <div style={{ width: 32, height: 3, borderRadius: 2, background: 'var(--c-border)' }} />
+</div>
+```
+
+Referenční soubor: [`src/renderer/src/components/roadmap-view/hooks/useRoadmapView.controller.ts`](../src/renderer/src/components/roadmap-view/hooks/useRoadmapView.controller.ts)
+
+---
+
+## Optimistic drag & drop s rollbackem
+
+Drag-and-drop, který přesouvá položky mezi sloupci (sprint ↔ backlog, uživatel ↔ uživatel), udržuje lokální kopie serverových dat ve dvou stavových polích. Update probíhá ihned (optimisticky), rollback nastane při chybě API.
+
+**Vzor:**
+
+1. `localItems` se inicializují z `dataProps.items` přes `useEffect` — synchronizují se při každém refetchi
+2. `handleDrop` provede mutaci lokálního stavu **před** voláním API
+3. `catch` blok obnoví lokální stav z `dataProps` (serverová data)
+
+```ts
+const [localSprintIssues, setLocalSprintIssues] = useState<JiraIssue[]>([])
+const [localBacklogIssues, setLocalBacklogIssues] = useState<JiraIssue[]>([])
+
+useEffect(() => { setLocalSprintIssues(dataProps.sprintIssues) }, [dataProps.sprintIssues])
+useEffect(() => { setLocalBacklogIssues(dataProps.backlogIssues) }, [dataProps.backlogIssues])
+
+const handleDrop = useCallback(async (targetUserId, targetSprintId) => {
+    // 1. Optimistic update — mutuj lokální stav
+    setLocalSprintIssues(prev => prev.map(applyOptimistic))
+    // ...přesuň issue mezi poli dle cíle...
+
+    try {
+        // 2. API volání
+        await moveToSprint.mutateAsync(...)
+        if (assigneeChanged) await updateIssue.mutateAsync(...)
+    } catch {
+        // 3. Rollback
+        setLocalSprintIssues(dataProps.sprintIssues)
+        setLocalBacklogIssues(dataProps.backlogIssues)
+    }
+}, [...])
+```
+
+Referenční soubor: [`src/renderer/src/components/roadmap-view/hooks/useRoadmapView.controller.ts`](../src/renderer/src/components/roadmap-view/hooks/useRoadmapView.controller.ts)
+
+---
+
+## Paleta barev uživatelů — exportovaná konstanta
+
+Když je potřeba přiřadit každému uživateli vizuálně odlišnou barvu (karty, headers, badges), definuj paletu jako exportované pole objektů `{ bg, text, dot }` v komponentě, která ji jako první potřebuje. Ostatní komponenty ji importují a indexují přes `colorIndex`.
+
+```ts
+// components/RoadmapIssueCard.tsx
+export const ROADMAP_USER_COLORS: Array<{ bg: string; text: string; dot: string }> = [
+    { bg: "#E6F1FB", text: "#185FA5", dot: "#378ADD" },
+    { bg: "#FAEEDA", text: "#854F0B", dot: "#EF9F27" },
+    // ...
+]
+```
+
+```tsx
+// hook — sestaví RoadmapUser[] s colorIndex
+const selectedUsers = useMemo<RoadmapUser[]>(
+    () => selectedUserIds.map((id, index) => {
+        const user = allProjectUsers.find(u => u.accountId === id)
+        if (!user) return null
+        return { user, colorIndex: index }
+    }).filter(Boolean),
+    [selectedUserIds, allProjectUsers]
+)
+
+// child komponenta — použije colorIndex
+const color = ROADMAP_USER_COLORS[colorIndex % ROADMAP_USER_COLORS.length]
+```
+
+`RoadmapUser` typ (s `colorIndex`) je definován v `src/renderer/src/types/jira.ts`.
+
+Referenční soubory: [`src/renderer/src/components/roadmap-view/components/RoadmapIssueCard.tsx`](../src/renderer/src/components/roadmap-view/components/RoadmapIssueCard.tsx), [`src/renderer/src/types/jira.ts`](../src/renderer/src/types/jira.ts)

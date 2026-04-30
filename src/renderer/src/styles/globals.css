@@ -620,6 +620,99 @@
         box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.4);
         background: rgba(59, 130, 246, 0.05);
     }
+
+    /* ── Roadmap view ──────────────────────────────────────────────── */
+
+    .roadmap-table {
+        border-collapse: separate;
+        border-spacing: 0;
+        table-layout: fixed;
+    }
+
+    .roadmap-sprint-col {
+        position: sticky;
+        left: 0;
+        z-index: 5;
+        background: var(--c-bg-sidebar);
+        width: 300px;
+        min-width: 300px;
+        max-width: 300px;
+        border-bottom: 1px solid var(--c-border);
+        border-right: 1px solid var(--c-border);
+    }
+
+    .roadmap-sprint-col.sprint-active {
+        background: rgba(29, 158, 117, 0.08);
+        border-left: 3px solid #1D9E75;
+    }
+
+    .roadmap-row-active .roadmap-cell {
+        background: rgba(29, 158, 117, 0.04);
+    }
+
+    .roadmap-user-th {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: var(--c-bg-sidebar);
+        width: 300px;
+        min-width: 300px;
+        max-width: 300px;
+        padding: 8px;
+        border-bottom: 1px solid var(--c-border);
+        border-right: 1px solid var(--c-border);
+        vertical-align: bottom;
+    }
+
+    .roadmap-cell {
+        width: 400px;
+        min-width: 400px;
+        max-width: 400px;
+        vertical-align: top;
+        padding: 6px;
+        border-bottom: 1px solid var(--c-border);
+        border-right: 1px solid var(--c-border);
+        transition: background 0.1s;
+        position: relative;
+    }
+
+    .roadmap-cell.drop-ok {
+        background: rgba(55, 138, 221, 0.08);
+    }
+
+    .roadmap-cell.drop-warn {
+        background: rgba(239, 159, 39, 0.1);
+    }
+
+    .roadmap-capacity-bar {
+        height: 3px;
+        border-radius: 2px;
+        background: var(--c-border);
+        overflow: hidden;
+        margin-bottom: 4px;
+    }
+
+    .roadmap-issue-card {
+        border-radius: 5px;
+        padding: 5px 7px;
+        margin-bottom: 3px;
+        cursor: grab;
+        font-size: 11px;
+        user-select: none;
+    }
+
+    .roadmap-issue-card:active {
+        cursor: grabbing;
+        opacity: 0.65;
+    }
+
+    .roadmap-backlog-panel {
+        flex-shrink: 0;
+        overflow: hidden;
+        background: var(--c-bg-board);
+        border-top: 2px solid var(--c-border);
+        transition: height 0.2s ease;
+    }
 }
 
 /* ── Light mode overrides for Tailwind gray utilities ─────────────── */
