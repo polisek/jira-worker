@@ -13,6 +13,7 @@ import { WorkLogView } from "./components/work-log-view"
 import { ActivityView } from "./components/ActivityView"
 import TreeView from "./components/tree-view"
 import { GraphView } from "./components/graph-view"
+import { RoadmapView } from "./components/roadmap-view"
 import type { JiraSettings, JiraIssue, JiraProject, ViewMode, AppPrefs } from "./types/jira"
 import { DEFAULT_PREFS as DEFAULTS } from "./types/jira"
 
@@ -201,6 +202,13 @@ export default function App() {
                             onPrefsChange={handlePrefsChange}
                             onIssueSelect={setSelectedIssue}
                             initialEpicKey={graphEpicKey}
+                        />
+                    ) : view === "roadmap" ? (
+                        <RoadmapView
+                            selectedProject={selectedProject}
+                            prefs={prefs}
+                            onPrefsChange={handlePrefsChange}
+                            onIssueSelect={setSelectedIssue}
                         />
                     ) : (
                         <ListView

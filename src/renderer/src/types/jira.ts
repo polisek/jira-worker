@@ -127,7 +127,7 @@ export interface JiraTransition {
     to: JiraStatus
 }
 
-export type ViewMode = "board" | "list" | "tree" | "settings" | "time" | "worklog" | "activity" | "graph"
+export type ViewMode = "board" | "list" | "tree" | "settings" | "time" | "worklog" | "activity" | "graph" | "roadmap"
 
 export interface JiraChangelogItem {
     field: string
@@ -193,6 +193,7 @@ export interface AppPrefs {
     theme: "dark" | "light" | "auto"
     hiddenProjectKeys: string[]
     graphLayouts?: GraphLayout[]
+    roadmapUserIds?: string[]
 }
 
 export interface AdvancedFilter {
@@ -225,4 +226,16 @@ export const DEFAULT_PREFS: AppPrefs = {
     dailyWorkHours: 8,
     theme: "dark",
     hiddenProjectKeys: [],
+    roadmapUserIds: [],
+}
+
+export interface RoadmapUser {
+    user: JiraUser
+    colorIndex: number
+}
+
+export type RoadmapDragPayload = {
+    issueKey: string
+    fromUserId: string | null
+    fromSprintId: number | null
 }

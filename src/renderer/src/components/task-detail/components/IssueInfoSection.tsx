@@ -1,7 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useAssignIssueMutation } from '../../../api/users/assign-issue'
 import { useUpdateIssueMutation } from '../../../api/issues/update-issue'
 import { usePrioritiesQuery } from '../../../api/issues/get-priorities'
+import { useBoardsQuery } from '../../../api/boards/get-boards'
+import { useBoardSprintsQuery } from '../../../api/boards/get-board-sprints'
+import { useMoveToSprintMutation } from '../../../api/sprints/move-to-sprint'
+import { useMoveToBacklogMutation } from '../../../api/sprints/move-to-backlog'
+import { queryKeys } from '../../../api/queryKeys'
 import { UserPicker } from '../../UserPicker'
 import { StatusBadge } from '../../IssueBadges'
 import { formatDate } from '../../../utils/adf'
@@ -41,11 +47,22 @@ function MetaField({ label, editable, editing, onDoubleClick, children, classNam
 export function IssueInfoSection({ issue, assignableUsers, onNavigateTo }: Props) {
     const [editingAssignee, setEditingAssignee] = useState(false)
     const [editingPriority, setEditingPriority] = useState(false)
+    const [editingSprint, setEditingSprint] = useState(false)
     const priorityRef = useRef<HTMLDivElement>(null)
+    const sprintRef = useRef<HTMLDivElement>(null)
 
+    const queryClient = useQueryClient()
     const assignMutation = useAssignIssueMutation(issue.key)
     const updateMutation = useUpdateIssueMutation(issue.key)
+    const moveToSprint = useMoveToSprintMutation()
+    const moveToBacklog = useMoveToBacklogMutation()
     const { data: priorities = [] } = usePrioritiesQuery()
+
+    const projectKey = issue.fields.project.key
+    const boardsQuery = useBoardsQuery(projectKey)
+    const boardId = boardsQuery.data?.values[0]?.id ?? 0
+    const sprintsQuery = useBoardSprintsQuery(boardId, { enabled: !!boardId })
+    const availableSprints = sprintsQuery.data?.values ?? []
 
     // Close priority dropdown on outside click
     useEffect(() => {
@@ -57,10 +74,21 @@ export function IssueInfoSection({ issue, assignableUsers, onNavigateTo }: Props
         return () => document.removeEventListener('mousedown', handler)
     }, [editingPriority])
 
+    // Close sprint dropdown on outside click
+    useEffect(() => {
+        if (!editingSprint) return
+        const handler = (e: MouseEvent) => {
+            if (!sprintRef.current?.contains(e.target as Node)) setEditingSprint(false)
+        }
+        document.addEventListener('mousedown', handler)
+        return () => document.removeEventListener('mousedown', handler)
+    }, [editingSprint])
+
     // Reset edit states when issue changes
     useEffect(() => {
         setEditingAssignee(false)
         setEditingPriority(false)
+        setEditingSprint(false)
     }, [issue.key])
 
     const handleAssigneeChange = async (user: JiraUser | null) => {
@@ -71,6 +99,16 @@ export function IssueInfoSection({ issue, assignableUsers, onNavigateTo }: Props
     const handlePrioritySelect = async (name: string) => {
         await updateMutation.mutateAsync({ priority: { name } })
         setEditingPriority(false)
+    }
+
+    const handleSprintSelect = async (sprintId: number | null) => {
+        setEditingSprint(false)
+        if (sprintId === null) {
+            await moveToBacklog.mutateAsync(issue.key)
+        } else {
+            await moveToSprint.mutateAsync({ sprintId, issueKey: issue.key })
+        }
+        await queryClient.invalidateQueries({ queryKey: queryKeys.issues.detail(issue.key) })
     }
 
     const storyPoints = issue.fields.customfield_10016
@@ -146,6 +184,82 @@ export function IssueInfoSection({ issue, assignableUsers, onNavigateTo }: Props
                                     {p.name}
                                 </button>
                             ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Sprint — editable */}
+                <div ref={sprintRef} className="col-span-2 relative">
+                    <MetaField
+                        label="Sprint"
+                        editable
+                        editing={editingSprint}
+                        onDoubleClick={() => !editingSprint && setEditingSprint(true)}
+                    >
+                        {issue.fields.customfield_10020 && issue.fields.customfield_10020.length > 0 ? (
+                            <div className="flex flex-wrap gap-1.5">
+                                {issue.fields.customfield_10020.map((sprint) => {
+                                    const stateColor =
+                                        sprint.state === 'active'
+                                            ? 'text-green-400'
+                                            : sprint.state === 'future'
+                                              ? 'text-blue-400'
+                                              : 'text-gray-500'
+                                    const stateBg =
+                                        sprint.state === 'active'
+                                            ? 'rgba(34,197,94,0.12)'
+                                            : sprint.state === 'future'
+                                              ? 'rgba(59,130,246,0.12)'
+                                              : 'rgba(0,0,0,0.15)'
+                                    return (
+                                        <span
+                                            key={sprint.id}
+                                            className={`inline-flex items-center gap-1.5 text-xs px-2 py-0.5 rounded ${stateColor}`}
+                                            style={{ background: stateBg }}
+                                        >
+                                            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: 'currentColor' }} />
+                                            {sprint.name}
+                                        </span>
+                                    )
+                                })}
+                            </div>
+                        ) : (
+                            <span className="text-xs text-gray-500 italic">Backlog</span>
+                        )}
+                    </MetaField>
+
+                    {editingSprint && (
+                        <div
+                            className="absolute top-full left-0 z-50 mt-1 rounded-lg border border-gray-700 shadow-xl py-1 min-w-[220px] max-h-60 overflow-y-auto"
+                            style={{ background: 'var(--c-bg-detail)' }}
+                        >
+                            <button
+                                onClick={() => handleSprintSelect(null)}
+                                className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-gray-400 hover:bg-gray-700/50 transition-colors italic"
+                            >
+                                Backlog (bez sprintu)
+                            </button>
+                            {availableSprints.length > 0 && (
+                                <div className="border-t border-gray-700/50 mt-1 pt-1">
+                                    {availableSprints.map((sprint) => {
+                                        const dotColor =
+                                            sprint.state === 'active' ? '#4ade80' : '#60a5fa'
+                                        return (
+                                            <button
+                                                key={sprint.id}
+                                                onClick={() => handleSprintSelect(sprint.id)}
+                                                className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-gray-300 hover:bg-gray-700/50 transition-colors"
+                                            >
+                                                <span
+                                                    className="w-1.5 h-1.5 rounded-full shrink-0"
+                                                    style={{ background: dotColor }}
+                                                />
+                                                {sprint.name}
+                                            </button>
+                                        )
+                                    })}
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

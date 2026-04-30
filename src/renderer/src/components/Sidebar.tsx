@@ -15,6 +15,7 @@ import {
     Check,
     GitBranch,
     Network,
+    Map,
 } from "lucide-react"
 import { jiraApi } from "../utils/jira-api"
 import { RecentAssignments } from "./RecentAssignments"
@@ -130,6 +131,9 @@ export function Sidebar({
                 </button>
                 <button onClick={() => setView("graph")} className={`sidebar-item ${view === "graph" ? "active" : ""}`}>
                     <Network className="w-4 h-4" /> Graf
+                </button>
+                <button onClick={() => setView("roadmap")} className={`sidebar-item ${view === "roadmap" ? "active" : ""}`}>
+                    <Map className="w-4 h-4" /> Roadmap
                 </button>
                 <button onClick={() => setView("time")} className={`sidebar-item ${view === "time" ? "active" : ""}`}>
                     <Timer className="w-4 h-4" /> Měření času

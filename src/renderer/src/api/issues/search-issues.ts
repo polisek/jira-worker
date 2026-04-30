@@ -35,6 +35,7 @@ export async function searchIssuesRequest(
             'parent',
             'timeestimate',
             'timespent',
+            'timeoriginalestimate',
             'customfield_10016',
             'customfield_10014',
             'customfield_10020',

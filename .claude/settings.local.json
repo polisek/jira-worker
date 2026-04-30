@@ -12,7 +12,10 @@
       "Bash(yarn build *)",
       "Bash(yarn dev *)",
       "Bash(kill %1)",
-      "Bash(wait)"
+      "Bash(wait)",
+      "Bash(grep -E \"\\\\.\\(ts|tsx\\)$\")",
+      "Bash(cat)",
+      "Read(//tmp/**)"
     ]
   }
 }
