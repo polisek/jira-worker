@@ -556,6 +556,7 @@ const RoadmapViewView: FC<RoadmapViewProps> = ({ selectedProject, onIssueSelect,
                                         refetch()
                                     } catch (e) {
                                         setCloseError(e instanceof Error ? e.message : "Operace se nezdařila")
+                                        refetch()
                                     }
                                 }}
                                 disabled={closeSprint.isPending || startSprint.isPending}

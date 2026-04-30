@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { agileRequest } from '../client'
+import { queryKeys } from '../queryKeys'
 
 interface SprintUpdateParams {
     sprintId: number
@@ -18,8 +19,8 @@ export async function startSprintRequest({ sprintId, name, startDate, endDate }:
 
 function invalidateSprintQueries(queryClient: ReturnType<typeof useQueryClient>) {
     return Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['boards', 'sprints'] }),
-        queryClient.invalidateQueries({ queryKey: ['issues', 'list'] }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.boards.allSprints() }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.issues.lists() }),
     ])
 }
 

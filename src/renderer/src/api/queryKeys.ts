@@ -37,6 +37,7 @@ export const queryKeys = {
 
     boards: {
         list: (projectKey: string) => ['boards', 'list', projectKey] as const,
+        allSprints: () => ['boards', 'sprints'] as const,
         sprints: (boardId: number) => ['boards', 'sprints', boardId] as const,
     },
 
