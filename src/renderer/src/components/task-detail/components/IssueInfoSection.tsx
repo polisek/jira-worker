@@ -1,18 +1,18 @@
-import { useState, useEffect, useRef } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
-import { useAssignIssueMutation } from '../../../api/users/assign-issue'
-import { useUpdateIssueMutation } from '../../../api/issues/update-issue'
-import { usePrioritiesQuery } from '../../../api/issues/get-priorities'
-import { useBoardsQuery } from '../../../api/boards/get-boards'
-import { useBoardSprintsQuery } from '../../../api/boards/get-board-sprints'
-import { useMoveToSprintMutation } from '../../../api/sprints/move-to-sprint'
-import { useMoveToBacklogMutation } from '../../../api/sprints/move-to-backlog'
-import { queryKeys } from '../../../api/queryKeys'
-import { UserPicker } from '../../UserPicker'
-import { StatusBadge } from '../../IssueBadges'
-import { formatDate } from '../../../utils/adf'
-import { DetailCard } from './DetailCard'
-import type { JiraIssue, JiraUser } from '../../../types/jira'
+import { useState, useEffect, useRef } from "react"
+import { useQueryClient } from "@tanstack/react-query"
+import { useAssignIssueMutation } from "../../../api/users/assign-issue"
+import { useUpdateIssueMutation } from "../../../api/issues/update-issue"
+import { usePrioritiesQuery } from "../../../api/issues/get-priorities"
+import { useBoardsQuery } from "../../../api/boards/get-boards"
+import { useBoardSprintsQuery } from "../../../api/boards/get-board-sprints"
+import { useMoveToSprintMutation } from "../../../api/sprints/move-to-sprint"
+import { useMoveToBacklogMutation } from "../../../api/sprints/move-to-backlog"
+import { queryKeys } from "../../../api/queryKeys"
+import { UserPicker } from "../../UserPicker"
+import { StatusBadge } from "../../IssueBadges"
+import { formatDate } from "../../../utils/adf"
+import { DetailCard } from "./DetailCard"
+import type { JiraIssue, JiraUser } from "../../../types/jira"
 
 interface Props {
     issue: JiraIssue
@@ -29,14 +29,14 @@ interface MetaFieldProps {
     className?: string
 }
 
-function MetaField({ label, editable, editing, onDoubleClick, children, className = '' }: MetaFieldProps) {
+function MetaField({ label, editable, editing, onDoubleClick, children, className = "" }: MetaFieldProps) {
     return (
         <div className={className}>
             <p className="text-xs text-gray-600 mb-1">{label}</p>
             <div
                 onDoubleClick={onDoubleClick}
-                className={`py-0.5 rounded transition-colors ${editable ? 'meta-field-editable' : ''} ${editing ? 'editing' : ''}`}
-                title={editable && !editing ? 'Dvojklik pro úpravu' : undefined}
+                className={`py-0.5 rounded transition-colors ${editable ? "meta-field-editable" : ""} ${editing ? "editing" : ""}`}
+                title={editable && !editing ? "Dvojklik pro úpravu" : undefined}
             >
                 {children}
             </div>
@@ -70,8 +70,8 @@ export function IssueInfoSection({ issue, assignableUsers, onNavigateTo }: Props
         const handler = (e: MouseEvent) => {
             if (!priorityRef.current?.contains(e.target as Node)) setEditingPriority(false)
         }
-        document.addEventListener('mousedown', handler)
-        return () => document.removeEventListener('mousedown', handler)
+        document.addEventListener("mousedown", handler)
+        return () => document.removeEventListener("mousedown", handler)
     }, [editingPriority])
 
     // Close sprint dropdown on outside click
@@ -80,8 +80,8 @@ export function IssueInfoSection({ issue, assignableUsers, onNavigateTo }: Props
         const handler = (e: MouseEvent) => {
             if (!sprintRef.current?.contains(e.target as Node)) setEditingSprint(false)
         }
-        document.addEventListener('mousedown', handler)
-        return () => document.removeEventListener('mousedown', handler)
+        document.addEventListener("mousedown", handler)
+        return () => document.removeEventListener("mousedown", handler)
     }, [editingSprint])
 
     // Reset edit states when issue changes
@@ -133,7 +133,7 @@ export function IssueInfoSection({ issue, assignableUsers, onNavigateTo }: Props
                     ) : issue.fields.assignee ? (
                         <div className="flex items-center gap-1.5">
                             <img
-                                src={issue.fields.assignee.avatarUrls['48x48']}
+                                src={issue.fields.assignee.avatarUrls["48x48"]}
                                 className="w-5 h-5 rounded-full"
                                 alt=""
                             />
@@ -147,11 +147,7 @@ export function IssueInfoSection({ issue, assignableUsers, onNavigateTo }: Props
                 {/* Reporter — readonly */}
                 <MetaField label="Reporter">
                     <div className="flex items-center gap-1.5">
-                        <img
-                            src={issue.fields.reporter.avatarUrls['48x48']}
-                            className="w-5 h-5 rounded-full"
-                            alt=""
-                        />
+                        <img src={issue.fields.reporter.avatarUrls["48x48"]} className="w-5 h-5 rounded-full" alt="" />
                         <span className="text-xs text-gray-300">{issue.fields.reporter.displayName}</span>
                     </div>
                 </MetaField>
@@ -172,7 +168,7 @@ export function IssueInfoSection({ issue, assignableUsers, onNavigateTo }: Props
                     {editingPriority && priorities.length > 0 && (
                         <div
                             className="absolute top-full left-0 z-50 mt-1 rounded-lg border border-gray-700 shadow-xl py-1 min-w-[150px]"
-                            style={{ background: 'var(--c-bg-detail)' }}
+                            style={{ background: "var(--c-bg-detail)" }}
                         >
                             {priorities.map((p) => (
                                 <button
@@ -200,24 +196,27 @@ export function IssueInfoSection({ issue, assignableUsers, onNavigateTo }: Props
                             <div className="flex flex-wrap gap-1.5">
                                 {issue.fields.customfield_10020.map((sprint) => {
                                     const stateColor =
-                                        sprint.state === 'active'
-                                            ? 'text-green-400'
-                                            : sprint.state === 'future'
-                                              ? 'text-blue-400'
-                                              : 'text-gray-500'
+                                        sprint.state === "active"
+                                            ? "text-green-400"
+                                            : sprint.state === "future"
+                                              ? "text-blue-400"
+                                              : "text-gray-500"
                                     const stateBg =
-                                        sprint.state === 'active'
-                                            ? 'rgba(34,197,94,0.12)'
-                                            : sprint.state === 'future'
-                                              ? 'rgba(59,130,246,0.12)'
-                                              : 'rgba(0,0,0,0.15)'
+                                        sprint.state === "active"
+                                            ? "rgba(34,197,94,0.12)"
+                                            : sprint.state === "future"
+                                              ? "rgba(59,130,246,0.12)"
+                                              : "rgba(0,0,0,0.15)"
                                     return (
                                         <span
                                             key={sprint.id}
                                             className={`inline-flex items-center gap-1.5 text-xs px-2 py-0.5 rounded ${stateColor}`}
                                             style={{ background: stateBg }}
                                         >
-                                            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: 'currentColor' }} />
+                                            <span
+                                                className="w-1.5 h-1.5 rounded-full shrink-0"
+                                                style={{ background: "currentColor" }}
+                                            />
                                             {sprint.name}
                                         </span>
                                     )
@@ -231,7 +230,7 @@ export function IssueInfoSection({ issue, assignableUsers, onNavigateTo }: Props
                     {editingSprint && (
                         <div
                             className="absolute top-full left-0 z-50 mt-1 rounded-lg border border-gray-700 shadow-xl py-1 min-w-[220px] max-h-60 overflow-y-auto"
-                            style={{ background: 'var(--c-bg-detail)' }}
+                            style={{ background: "var(--c-bg-detail)" }}
                         >
                             <button
                                 onClick={() => handleSprintSelect(null)}
@@ -242,8 +241,7 @@ export function IssueInfoSection({ issue, assignableUsers, onNavigateTo }: Props
                             {availableSprints.length > 0 && (
                                 <div className="border-t border-gray-700/50 mt-1 pt-1">
                                     {availableSprints.map((sprint) => {
-                                        const dotColor =
-                                            sprint.state === 'active' ? '#4ade80' : '#60a5fa'
+                                        const dotColor = sprint.state === "active" ? "#4ade80" : "#60a5fa"
                                         return (
                                             <button
                                                 key={sprint.id}
@@ -292,7 +290,9 @@ export function IssueInfoSection({ issue, assignableUsers, onNavigateTo }: Props
                         <p className="text-xs text-gray-600 mb-1.5">Štítky</p>
                         <div className="flex flex-wrap gap-1.5">
                             {issue.fields.labels.map((l) => (
-                                <span key={l} className="badge badge-gray">{l}</span>
+                                <span key={l} className="badge badge-gray">
+                                    {l}
+                                </span>
                             ))}
                         </div>
                     </div>
@@ -301,15 +301,13 @@ export function IssueInfoSection({ issue, assignableUsers, onNavigateTo }: Props
                 {/* Subtasks */}
                 {issue.fields.subtasks?.length > 0 && (
                     <div className="col-span-2">
-                        <p className="text-xs text-gray-600 mb-1.5">
-                            Podúkoly ({issue.fields.subtasks.length})
-                        </p>
+                        <p className="text-xs text-gray-600 mb-1.5">Podúkoly ({issue.fields.subtasks.length})</p>
                         <div className="flex flex-col gap-1">
                             {issue.fields.subtasks.map((s) => (
                                 <div
                                     key={s.id}
                                     className="flex items-center gap-2 py-1.5 px-2 rounded"
-                                    style={{ background: 'var(--c-bg-card-alt)' }}
+                                    style={{ background: "var(--c-bg-card-alt)" }}
                                 >
                                     <img src={s.fields.issuetype.iconUrl} alt="" className="w-3.5 h-3.5 shrink-0" />
                                     <button
@@ -321,7 +319,7 @@ export function IssueInfoSection({ issue, assignableUsers, onNavigateTo }: Props
                                     <span className="text-xs text-gray-300 truncate flex-1">{s.fields.summary}</span>
                                     {s.fields.assignee && (
                                         <img
-                                            src={s.fields.assignee.avatarUrls['48x48']}
+                                            src={s.fields.assignee.avatarUrls["48x48"]}
                                             alt={s.fields.assignee.displayName}
                                             title={s.fields.assignee.displayName}
                                             className="w-4 h-4 rounded-full shrink-0"

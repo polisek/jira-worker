@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { ReactNode } from "react"
 
 interface Props {
     title?: string
@@ -8,7 +8,7 @@ interface Props {
     className?: string
 }
 
-export function DetailCard({ title, action, footer, children, className = '' }: Props) {
+export function DetailCard({ title, action, footer, children, className = "" }: Props) {
     return (
         <div className={`detail-section-card ${className}`}>
             {title !== undefined && (
@@ -18,9 +18,7 @@ export function DetailCard({ title, action, footer, children, className = '' }: 
                 </div>
             )}
             <div className="detail-section-card-content">{children}</div>
-            {footer !== undefined && (
-                <div className="detail-section-card-footer">{footer}</div>
-            )}
+            {footer !== undefined && <div className="detail-section-card-footer">{footer}</div>}
         </div>
     )
 }

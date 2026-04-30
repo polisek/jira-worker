@@ -16,6 +16,8 @@ export type GraphViewProps = {
     prefs: AppPrefs
     selectedEpicKey: string | null
     setSelectedEpicKey: (key: string | null) => void
+    hideDone: boolean
+    toggleHideDone: () => void
     dataProps: GraphViewDataProps
     controllerProps: GraphViewControllerProps
 }
@@ -28,6 +30,7 @@ const useGraphView = ({
     initialEpicKey,
 }: useGraphViewProps): GraphViewProps => {
     const [selectedEpicKey, setSelectedEpicKey] = useState<string | null>(initialEpicKey ?? null)
+    const [hideDone, setHideDone] = useState(false)
     useEffect(() => {
         if (initialEpicKey) setSelectedEpicKey(initialEpicKey)
     }, [initialEpicKey])
@@ -46,6 +49,8 @@ const useGraphView = ({
         prefs,
         selectedEpicKey,
         setSelectedEpicKey,
+        hideDone,
+        toggleHideDone: () => setHideDone((v) => !v),
         dataProps,
         controllerProps,
     }

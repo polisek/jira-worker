@@ -1,3 +1,4 @@
+import { useMemo } from "react"
 import { ReactFlow, Background, Controls, MiniMap, BackgroundVariant } from "@xyflow/react"
 import "@xyflow/react/dist/style.css"
 
@@ -19,6 +20,8 @@ export function GraphViewView({
     prefs,
     selectedEpicKey,
     setSelectedEpicKey,
+    hideDone,
+    toggleHideDone,
     dataProps,
     controllerProps,
 }: GraphViewProps) {
@@ -45,6 +48,25 @@ export function GraphViewView({
         dropPositionRef,
     } = controllerProps
 
+    const isLight =
+        prefs.theme === "light" || (prefs.theme === "auto" && document.documentElement.classList.contains("light"))
+    const rfColorMode = prefs.theme === "auto" ? "system" : prefs.theme
+
+    const visibleNodes = useMemo(() => {
+        if (!hideDone) return nodesWithCallback
+        return nodesWithCallback.filter((n) => {
+            const issue = (n.data as { issue?: { fields?: { status?: { statusCategory?: { key?: string } } } } }).issue
+            return issue?.fields?.status?.statusCategory?.key !== "done"
+        })
+    }, [nodesWithCallback, hideDone])
+
+    const visibleNodeIds = useMemo(() => new Set(visibleNodes.map((n) => n.id)), [visibleNodes])
+
+    const visibleEdges = useMemo(() => {
+        if (!hideDone) return edgesWithCallback
+        return edgesWithCallback.filter((e) => visibleNodeIds.has(e.source) && visibleNodeIds.has(e.target))
+    }, [edgesWithCallback, hideDone, visibleNodeIds])
+
     if (!selectedProject) {
         return (
             <div className="flex items-center justify-center h-full text-gray-500 text-sm">
@@ -52,10 +74,6 @@ export function GraphViewView({
             </div>
         )
     }
-
-    const isLight =
-        prefs.theme === "light" || (prefs.theme === "auto" && document.documentElement.classList.contains("light"))
-    const rfColorMode = prefs.theme === "auto" ? "system" : prefs.theme
 
     return (
         <div className="flex flex-col h-full w-full">
@@ -66,9 +84,11 @@ export function GraphViewView({
                 loading={loading}
                 layoutSource={layoutSource}
                 nodes={nodes}
+                hideDone={hideDone}
                 onEpicChange={setSelectedEpicKey}
                 onReload={reload}
                 onSaveLayout={saveLayout}
+                onToggleHideDone={toggleHideDone}
             />
 
             {error && (
@@ -88,8 +108,8 @@ export function GraphViewView({
             {selectedEpicKey && (
                 <div className="flex-1 relative">
                     <ReactFlow
-                        nodes={nodesWithCallback}
-                        edges={edgesWithCallback}
+                        nodes={visibleNodes}
+                        edges={visibleEdges}
                         nodeTypes={NODE_TYPES}
                         edgeTypes={EDGE_TYPES}
                         onNodesChange={onNodesChange}

@@ -541,6 +541,7 @@
     .detail-section-card {
         background: var(--c-bg-card);
         border: 1px solid var(--c-border-card);
+        user-select: none;
         @apply rounded-xl mx-3 mb-3;
     }
 

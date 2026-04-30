@@ -1,4 +1,4 @@
-import { RefreshCw, UploadCloud } from "lucide-react"
+import { RefreshCw, UploadCloud, EyeOff } from "lucide-react"
 import type { Node } from "@xyflow/react"
 import type { JiraIssue } from "../../../types/jira"
 import type { LayoutSource } from "../hooks/useGraphView.graph-data"
@@ -10,9 +10,11 @@ interface Props {
     loading: boolean
     layoutSource: LayoutSource
     nodes: Node[]
+    hideDone: boolean
     onEpicChange: (key: string | null) => void
     onReload: () => void
     onSaveLayout: (nodes: Node[]) => void
+    onToggleHideDone: () => void
 }
 
 export function GraphToolbar({
@@ -22,9 +24,11 @@ export function GraphToolbar({
     loading,
     layoutSource,
     nodes,
+    hideDone,
     onEpicChange,
     onReload,
     onSaveLayout,
+    onToggleHideDone,
 }: Props) {
     return (
         <div
@@ -60,6 +64,18 @@ export function GraphToolbar({
 
             {selectedEpicKey && (
                 <div className="ml-auto flex items-center gap-3">
+                    <button
+                        onClick={onToggleHideDone}
+                        className={`flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded border transition-colors ${
+                            hideDone
+                                ? "bg-green-500/15 text-green-400 border-green-500/30"
+                                : "bg-transparent border-transparent text-gray-500 hover:text-gray-300"
+                        }`}
+                        title={hideDone ? "Zobrazit dokončené tasky" : "Skrýt dokončené tasky"}
+                    >
+                        <EyeOff className="w-3 h-3" />
+                        Hotovo
+                    </button>
                     <button className="btn-icon" title="Obnovit" onClick={onReload} disabled={loading}>
                         <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
                     </button>
