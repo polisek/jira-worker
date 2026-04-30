@@ -79,12 +79,12 @@ export function RoadmapSprintCell({
                     }}
                 />
             </div>
-            <div className="flex items-center gap-1 text-[9px] mb-1.5" style={{ color: "var(--c-text-4)" }}>
+            <div className="flex items-center gap-1 text-[10px] mb-1.5" style={{ color: "var(--c-text-4)" }}>
                 <span>
-                    {usedHours.toFixed(1)}/{sprintCapacity}h ({pct}%)
+                    {usedHours.toFixed(1)} / {sprintCapacity}h ({pct}%)
                 </span>
                 {isOver && (
-                    <span className="px-1 rounded text-white text-[8px]" style={{ background: "#E24B4A" }}>
+                    <span className="px-1 rounded text-white text-[10px]" style={{ background: "#E24B4A" }}>
                         +{overHours.toFixed(1)}h
                     </span>
                 )}

@@ -3,11 +3,11 @@ import { Grip, ChevronDown, ChevronRight } from "lucide-react"
 import type { JiraIssue, RoadmapDragPayload } from "../../../types/jira"
 
 export const ROADMAP_USER_COLORS: Array<{ bg: string; text: string; dot: string }> = [
-    { bg: "#E1F5EE", text: "#0F6E56", dot: "#1D9E75" },
     { bg: "#E6F1FB", text: "#185FA5", dot: "#378ADD" },
-    { bg: "#FAECE7", text: "#993C1D", dot: "#D85A30" },
     { bg: "#FAEEDA", text: "#854F0B", dot: "#EF9F27" },
     { bg: "#EEEDFE", text: "#3C3489", dot: "#7F77DD" },
+    { bg: "#FAECE7", text: "#993C1D", dot: "#D85A30" },
+    { bg: "#E1F5EE", text: "#0F6E56", dot: "#1D9E75" },
     { bg: "#FBEAF0", text: "#993556", dot: "#D4537E" },
     { bg: "#EAF3DE", text: "#3B6D11", dot: "#639922" },
     { bg: "#F1EFE8", text: "#444441", dot: "#888780" },

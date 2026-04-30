@@ -641,6 +641,15 @@
         border-right: 1px solid var(--c-border);
     }
 
+    .roadmap-sprint-col.sprint-active {
+        background: rgba(29, 158, 117, 0.08);
+        border-left: 3px solid #1D9E75;
+    }
+
+    .roadmap-row-active .roadmap-cell {
+        background: rgba(29, 158, 117, 0.04);
+    }
+
     .roadmap-user-th {
         position: sticky;
         top: 0;
