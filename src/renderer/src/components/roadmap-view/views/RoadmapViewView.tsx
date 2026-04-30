@@ -19,8 +19,6 @@ function issueHours(issue: {
     return (own + sub) / 3600
 }
 
-const BACKLOG_OPEN_HEIGHT = 280
-const BACKLOG_CLOSED_HEIGHT = 36
 
 const RoadmapViewView: FC<RoadmapViewProps> = ({ selectedProject, onIssueSelect, dataProps, controllerProps }) => {
     const { boardId, sprints, allProjectUsers, loading, error, refetch } = dataProps
@@ -33,14 +31,15 @@ const RoadmapViewView: FC<RoadmapViewProps> = ({ selectedProject, onIssueSelect,
         selectedUserIds,
         getUserCapacity,
         setUserCapacity,
-        backlogOpen,
+        backlogHeight,
         showUserPicker,
         showCreateSprint,
         dragPayload,
         dragOverTarget,
         localSprintIssues,
         localBacklogIssues,
-        setBacklogOpen,
+        onBacklogToggle,
+        onBacklogResizeMouseDown,
         setShowUserPicker,
         setShowCreateSprint,
         handleUserToggle,
@@ -456,14 +455,26 @@ const RoadmapViewView: FC<RoadmapViewProps> = ({ selectedProject, onIssueSelect,
                         </table>
                     </div>
 
-                    {/* Backlog panel — sticky, fixed height, different bg */}
+                    {/* Backlog panel — resizable */}
                     <div
                         className="roadmap-backlog-panel"
-                        style={{ height: backlogOpen ? BACKLOG_OPEN_HEIGHT : BACKLOG_CLOSED_HEIGHT }}
+                        style={{ height: backlogHeight }}
                     >
+                        {/* Drag handle */}
+                        <div
+                            onMouseDown={onBacklogResizeMouseDown}
+                            className="w-full shrink-0 flex items-center justify-center"
+                            style={{
+                                height: 6,
+                                cursor: 'row-resize',
+                                background: 'transparent',
+                            }}
+                        >
+                            <div style={{ width: 32, height: 3, borderRadius: 2, background: 'var(--c-border)' }} />
+                        </div>
                         <RoadmapBacklog
-                            open={backlogOpen}
-                            onToggle={() => setBacklogOpen(!backlogOpen)}
+                            open={backlogHeight > 36}
+                            onToggle={onBacklogToggle}
                             backlogIssues={localBacklogIssues}
                             selectedUsers={selectedUsers}
                             getUserCapacity={getUserCapacity}

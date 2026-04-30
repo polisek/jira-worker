@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useMoveToSprintMutation } from "../../../api/sprints/move-to-sprint"
 import { useMoveToBacklogMutation } from "../../../api/sprints/move-to-backlog"
 import { useUpdateIssueMutation } from "../../../api/issues/update-issue"
@@ -19,7 +19,7 @@ function loadCapacities(): Record<string, number> {
 export type RoadmapViewControllerProps = {
     selectedUserIds: string[]
     userCapacities: Record<string, number>
-    backlogOpen: boolean
+    backlogHeight: number
     showUserPicker: boolean
     showCreateSprint: boolean
     dragPayload: RoadmapDragPayload | null
@@ -28,7 +28,8 @@ export type RoadmapViewControllerProps = {
     localBacklogIssues: JiraIssue[]
     getUserCapacity: (accountId: string) => number
     setUserCapacity: (accountId: string, hours: number) => void
-    setBacklogOpen: (open: boolean) => void
+    onBacklogToggle: () => void
+    onBacklogResizeMouseDown: (e: React.MouseEvent) => void
     setShowUserPicker: (show: boolean) => void
     setShowCreateSprint: (show: boolean) => void
     handleUserToggle: (userId: string) => void
@@ -52,7 +53,36 @@ const useRoadmapViewController = ({
 }: useRoadmapViewControllerProps): RoadmapViewControllerProps => {
     const [selectedUserIds, setSelectedUserIds] = useState<string[]>(prefs.roadmapUserIds ?? [])
     const [userCapacities, setUserCapacitiesState] = useState<Record<string, number>>(loadCapacities)
-    const [backlogOpen, setBacklogOpen] = useState(true)
+    const BACKLOG_COLLAPSED = 50
+    const BACKLOG_DEFAULT = 280
+    const [backlogHeight, setBacklogHeight] = useState(BACKLOG_DEFAULT)
+    const dragStartY = useRef<number | null>(null)
+    const dragStartHeight = useRef<number>(BACKLOG_DEFAULT)
+
+    const onBacklogToggle = useCallback(() => {
+        setBacklogHeight(h => h <= BACKLOG_COLLAPSED ? BACKLOG_DEFAULT : BACKLOG_COLLAPSED)
+    }, [])
+
+    const onBacklogResizeMouseDown = useCallback((e: React.MouseEvent) => {
+        e.preventDefault()
+        dragStartY.current = e.clientY
+        dragStartHeight.current = backlogHeight
+
+        const onMouseMove = (ev: MouseEvent) => {
+            if (dragStartY.current === null) return
+            const delta = dragStartY.current - ev.clientY
+            const next = Math.max(BACKLOG_COLLAPSED, Math.min(600, dragStartHeight.current + delta))
+            setBacklogHeight(next)
+        }
+        const onMouseUp = () => {
+            dragStartY.current = null
+            window.removeEventListener('mousemove', onMouseMove)
+            window.removeEventListener('mouseup', onMouseUp)
+        }
+        window.addEventListener('mousemove', onMouseMove)
+        window.addEventListener('mouseup', onMouseUp)
+    }, [backlogHeight])
+
     const [showUserPicker, setShowUserPicker] = useState(false)
     const [showCreateSprint, setShowCreateSprint] = useState(false)
     const [dragPayload, setDragPayload] = useState<RoadmapDragPayload | null>(null)
@@ -188,14 +218,15 @@ const useRoadmapViewController = ({
         userCapacities,
         getUserCapacity,
         setUserCapacity,
-        backlogOpen,
+        backlogHeight,
         showUserPicker,
         showCreateSprint,
         dragPayload,
         dragOverTarget,
         localSprintIssues,
         localBacklogIssues,
-        setBacklogOpen,
+        onBacklogToggle,
+        onBacklogResizeMouseDown,
         setShowUserPicker,
         setShowCreateSprint,
         handleUserToggle,
